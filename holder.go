@@ -6,40 +6,40 @@ import (
 	"reflect"
 )
 
-type Provider func(ctx *Context) (any, error)
+type ctor func(ctx *Context) (any, error)
 
 type holder struct {
-	provider     Provider
+	ctor         ctor
 	created      bool
 	instance     any
 	providesType reflect.Type
 }
 
-func NewHolder(provider any) (*holder, error) {
-	ptype := reflect.TypeOf(provider)
-	if ptype == nil {
-		return nil, errors.New("can't provide an untyped nil")
+func NewHolder(ctor any) (*holder, error) {
+	ctype := reflect.TypeOf(ctor)
+	if ctype == nil {
+		return nil, errors.New("untyped constructor")
 	}
-	if ptype.Kind() == reflect.Func {
-		return createLazyHolder(provider)
+	if ctype.Kind() == reflect.Func {
+		return createLazyHolder(ctor)
 	} else {
-		return createEagerHolder(provider)
+		return createEagerHolder(ctor)
 	}
 }
 
-func createLazyHolder(provider any) (*holder, error) {
-	pval := reflect.ValueOf(provider)
+func createLazyHolder(ctor any) (*holder, error) {
+	pval := reflect.ValueOf(ctor)
 	ptype := pval.Type()
 	numResults := ptype.NumOut()
 	if numResults < 1 || numResults > 2 {
-		return nil, fmt.Errorf("expected func to return one or two values")
+		return nil, fmt.Errorf("expected constructor to return one result")
 	}
 	if ptype.IsVariadic() {
-		return nil, fmt.Errorf("variadic params not supported. use slice instead")
+		return nil, fmt.Errorf("variadic constructor parameters are not supported (use slice instead)")
 	}
 	errorInterface := reflect.TypeOf((*error)(nil)).Elem()
 	if numResults == 2 && !ptype.Out(1).AssignableTo(errorInterface) {
-		return nil, fmt.Errorf("expected func second result to be assignable to error")
+		return nil, fmt.Errorf("expected constructor second result to be an error")
 	}
 	resultType := ptype.Out(0)
 	numArgs := ptype.NumIn()
@@ -76,7 +76,7 @@ func createLazyHolder(provider any) (*holder, error) {
 		return obj, nil
 	}
 	return &holder{
-		provider:     prov,
+		ctor:         prov,
 		providesType: resultType,
 	}, nil
 }
@@ -85,7 +85,7 @@ func createEagerHolder(value any) (*holder, error) {
 	return &holder{
 		created:      true,
 		instance:     value,
-		provider:     func(*Context) (any, error) { return value, nil },
+		ctor:         func(*Context) (any, error) { return value, nil },
 		providesType: reflect.TypeOf(value),
 	}, nil
 }
@@ -113,10 +113,10 @@ func provide(ctx *Context, holder *holder) (result any, err error) {
 			case error:
 				err = x
 			default:
-				err = errors.New("provider panic")
+				err = errors.New("ctor panic")
 			}
 			result = empty[any]()
 		}
 	}()
-	return holder.provider(ctx)
+	return holder.ctor(ctx)
 }

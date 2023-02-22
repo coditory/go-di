@@ -15,7 +15,9 @@ type transitiveBar struct {
 	baz *transitiveBaz
 }
 
-type transitiveBaz struct{}
+type transitiveBaz struct {
+	message string
+}
 
 func provideTransitiveFoo(bar *transitiveBar) *transitiveFoo {
 	return &transitiveFoo{bar: bar}
@@ -26,7 +28,7 @@ func provideTransitiveBar(baz *transitiveBaz) *transitiveBar {
 }
 
 func provideTransitiveBaz() *transitiveBaz {
-	return &transitiveBaz{}
+	return &transitiveBaz{message: "hello"}
 }
 
 func Test_TransitiveDependency(t *testing.T) {
@@ -38,4 +40,7 @@ func Test_TransitiveDependency(t *testing.T) {
 	result, err := di.Get[*transitiveFoo](ctx)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
+	assert.NotNil(t, result.bar)
+	assert.NotNil(t, result.bar.baz)
+	assert.Equal(t, result.bar.baz.message, "hello")
 }

@@ -1,20 +1,21 @@
 package di
 
 import (
+	"fmt"
 	"reflect"
 )
 
 type ContextBuilder struct {
-	holdersByProviders map[any]*holder
-	holdersByType      map[reflect.Type][]*holder
-	holdersByName      map[string]*holder
+	holdersByCtors map[any]*holder
+	holdersByType  map[reflect.Type][]*holder
+	holdersByName  map[string]*holder
 }
 
 func NewContextBuilder() *ContextBuilder {
 	return &ContextBuilder{
-		holdersByProviders: make(map[any]*holder),
-		holdersByType:      make(map[reflect.Type][]*holder),
-		holdersByName:      make(map[string]*holder),
+		holdersByCtors: make(map[any]*holder),
+		holdersByType:  make(map[reflect.Type][]*holder),
+		holdersByName:  make(map[string]*holder),
 	}
 }
 
@@ -25,8 +26,8 @@ func (ctxb *ContextBuilder) Build() *Context {
 	}
 }
 
-func (ctxb *ContextBuilder) Add(provider any) {
-	holder, err := createUniqueHolder(ctxb, provider)
+func (ctxb *ContextBuilder) Add(ctor any) {
+	holder, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
 		panic(err)
 	}
@@ -34,8 +35,8 @@ func (ctxb *ContextBuilder) Add(provider any) {
 	ctxb.holdersByType[itype] = append(ctxb.holdersByType[itype], holder)
 }
 
-func (ctxb *ContextBuilder) AddAs(iface any, provider any) {
-	holder, err := createUniqueHolder(ctxb, provider)
+func (ctxb *ContextBuilder) AddAs(iface any, ctor any) {
+	holder, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
 		panic(err)
 	}
@@ -43,18 +44,19 @@ func (ctxb *ContextBuilder) AddAs(iface any, provider any) {
 	ctxb.holdersByType[itype] = append(ctxb.holdersByType[itype], holder)
 }
 
-func createUniqueHolder(ctxb *ContextBuilder, provider any) (*holder, error) {
-	ptr, ok := provider.(*any)
-	if !ok {
-		ptr = &provider
+func createUniqueHolder(ctxb *ContextBuilder, ctor any) (*holder, error) {
+	cval := reflect.ValueOf(ctor)
+	if cval.Kind() != reflect.Func {
+		return NewHolder(ctor)
 	}
-	hldr := ctxb.holdersByProviders[ptr]
+	ptr := fmt.Sprintf("%d", ctor)
+	hldr := ctxb.holdersByCtors[ptr]
 	if hldr == nil {
-		nhldr, err := NewHolder(provider)
+		nhldr, err := NewHolder(ctor)
 		if err != nil {
 			return nil, err
 		}
-		ctxb.holdersByProviders[ptr] = nhldr
+		ctxb.holdersByCtors[ptr] = nhldr
 		hldr = nhldr
 	}
 	return hldr, nil
