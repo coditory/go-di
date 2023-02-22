@@ -22,20 +22,6 @@ func (suite *SingleInitSuite) TestMultipleGet() {
 	suite.Equal(1, inits)
 }
 
-func (suite *SingleInitSuite) TestMultipleAdd() {
-	inits := 0
-	ctor := func() *Foo { inits++; return &Foo{} }
-	ctxb := di.NewContextBuilder()
-	ctxb.Add(ctor)
-	ctxb.Add(ctor)
-	ctx := ctxb.Build()
-	_, _ = di.Get[*Foo](ctx)
-	_, _ = di.Get[*Foo](ctx)
-	_, _ = di.GetAll[*Foo](ctx)
-	// TODO: should fail!!!
-	suite.Equal(1, inits)
-}
-
 func (suite *SingleInitSuite) TestMultipleAddDifferentTypes() {
 	inits := 0
 	ctor := func() *Foo { inits++; return &Foo{} }

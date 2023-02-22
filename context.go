@@ -7,11 +7,12 @@ import (
 )
 
 var (
-	ErrMissingObject   = errors.New("missing object")
-	ErrInvalidType     = errors.New("invalid type")
-	ErrDuplicatedName  = errors.New("duplicated name")
-	ErrDependencyCycle = errors.New("dependency cycle")
-	ErrSkipped         = errors.New("registration skipped")
+	ErrMissingObject          = errors.New("missing object")
+	ErrInvalidType            = errors.New("invalid type")
+	ErrDuplicatedName         = errors.New("duplicated name")
+	ErrDuplicatedRegistration = errors.New("duplicated registration")
+	ErrDependencyCycle        = errors.New("dependency cycle")
+	ErrSkipped                = errors.New("registration skipped")
 )
 
 type Context struct {
@@ -20,7 +21,7 @@ type Context struct {
 	holdersByName map[string]*holder
 }
 
-func (ctx *Context) getByType(otype reflect.Type) (any, error) {
+func (ctx *Context) GetByType(otype reflect.Type) (any, error) {
 	holders := ctx.holdersByType[otype]
 	if holders == nil {
 		return empty[any](), ErrMissingObject
@@ -32,15 +33,17 @@ func (ctx *Context) getByType(otype reflect.Type) (any, error) {
 		}
 		obj, err := holder.getOrCreate(depCtx)
 		if err != nil {
-			return empty[any](), err
+			if !errors.Is(err, ErrSkipped) {
+				return empty[any](), err
+			}
+		} else {
+			return obj, nil
 		}
-		// TODO: handle conditional beans
-		return obj, nil
 	}
 	return empty[any](), ErrMissingObject
 }
 
-func (ctx *Context) getAllByType(otype reflect.Type) ([]any, error) {
+func (ctx *Context) GetAllByType(otype reflect.Type) ([]any, error) {
 	holders := ctx.holdersByType[otype]
 	result := make([]any, 0)
 	for _, holder := range holders {
@@ -50,9 +53,12 @@ func (ctx *Context) getAllByType(otype reflect.Type) ([]any, error) {
 		}
 		obj, err := holder.getOrCreate(depCtx)
 		if err != nil {
-			return nil, err
+			if !errors.Is(err, ErrSkipped) {
+				return nil, err
+			}
+		} else {
+			result = append(result, obj)
 		}
-		result = append(result, obj)
 	}
 	return result, nil
 }
@@ -67,7 +73,7 @@ func GetOrPanic[T any](ctx *Context) T {
 
 func Get[T any](ctx *Context) (T, error) {
 	ttype := genericTypeOf[T]()
-	obj, err := ctx.getByType(ttype)
+	obj, err := ctx.GetByType(ttype)
 	if err != nil {
 		return empty[T](), err
 	}
@@ -88,7 +94,7 @@ func GetAllOrPanic[T any](ctx *Context) []T {
 
 func GetAll[T any](ctx *Context) ([]T, error) {
 	ttype := genericTypeOf[T]()
-	objs, err := ctx.getAllByType(ttype)
+	objs, err := ctx.GetAllByType(ttype)
 	if err != nil {
 		return nil, err
 	}

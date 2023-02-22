@@ -28,43 +28,43 @@ func NewHolder(ctor any) (*holder, error) {
 }
 
 func createLazyHolder(ctor any) (*holder, error) {
-	pval := reflect.ValueOf(ctor)
-	ptype := pval.Type()
-	numResults := ptype.NumOut()
+	cval := reflect.ValueOf(ctor)
+	ctype := cval.Type()
+	numResults := ctype.NumOut()
 	if numResults < 1 || numResults > 2 {
 		return nil, fmt.Errorf("expected constructor to return one result")
 	}
-	if ptype.IsVariadic() {
+	if ctype.IsVariadic() {
 		return nil, fmt.Errorf("variadic constructor parameters are not supported (use slice instead)")
 	}
 	errorInterface := reflect.TypeOf((*error)(nil)).Elem()
-	if numResults == 2 && !ptype.Out(1).AssignableTo(errorInterface) {
+	if numResults == 2 && !ctype.Out(1).AssignableTo(errorInterface) {
 		return nil, fmt.Errorf("expected constructor second result to be an error")
 	}
-	resultType := ptype.Out(0)
-	numArgs := ptype.NumIn()
+	resultType := ctype.Out(0)
+	numArgs := ctype.NumIn()
 	params := make([]reflect.Type, numArgs)
 	for i := 0; i < numArgs; i++ {
-		params[i] = ptype.In(i)
+		params[i] = ctype.In(i)
 	}
 	prov := func(ctx *Context) (any, error) {
 		args := make([]reflect.Value, numArgs)
 		for i, paramType := range params {
 			if paramType.Kind() == reflect.Slice {
-				argslice, err := ctx.getAllByType(paramType)
+				argslice, err := ctx.GetAllByType(paramType)
 				if err != nil {
 					return nil, err
 				}
 				args[i] = reflect.ValueOf(argslice)
 			} else {
-				arg, err := ctx.getByType(paramType)
+				arg, err := ctx.GetByType(paramType)
 				if err != nil {
 					return nil, err
 				}
 				args[i] = reflect.ValueOf(arg)
 			}
 		}
-		result := pval.Call(args)
+		result := cval.Call(args)
 		obj := result[0].Interface()
 		if len(result) == 2 {
 			err, ok := result[1].Interface().(error)
