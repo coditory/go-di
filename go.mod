@@ -1,4 +1,4 @@
-module coditory.com/goiku-di
+module github.com/coditory/go-di
 
 go 1.20
 

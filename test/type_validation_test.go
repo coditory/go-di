@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	di "coditory.com/goiku-di"
+	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
 )
 

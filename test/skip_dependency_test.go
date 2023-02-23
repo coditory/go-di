@@ -3,7 +3,7 @@ package di_test
 import (
 	"testing"
 
-	di "coditory.com/goiku-di"
+	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -34,8 +34,8 @@ func (suite *SkipDependencySuite) TestResolveSliceWithNonSkippedDependnecies() {
 		baz []Baz
 	}
 	ctxb := di.NewContextBuilder()
-	ctxb.AddAs(new(Baz), &bar)
 	ctxb.AddAs(new(Baz), func() *Foo { panic(di.ErrSkipped) })
+	ctxb.AddAs(new(Baz), &bar)
 	ctxb.Add(func(baz []Baz) *Boo {
 		return &Boo{baz: baz}
 	})

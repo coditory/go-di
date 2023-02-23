@@ -3,7 +3,7 @@ package di_test
 import (
 	"testing"
 
-	di "coditory.com/goiku-di"
+	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/assert"
 )
 
