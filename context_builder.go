@@ -54,6 +54,9 @@ func (ctxb *ContextBuilder) AddAs(iface any, ctor any) {
 }
 
 func (ctxb *ContextBuilder) addHolderForType(hldr *holder, itype reflect.Type) error {
+	if hldr.providesType != itype && !hldr.providesType.AssignableTo(itype) {
+		return ErrInvalidType
+	}
 	if ctxb.holdersByType[itype] == nil {
 		ctxb.holdersByType[itype] = NewSet[*holder]()
 	}
