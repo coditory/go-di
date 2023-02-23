@@ -46,7 +46,7 @@ func (ctxb *ContextBuilder) AddAs(iface any, ctor any) {
 	if err != nil {
 		panic(err)
 	}
-	itype := reflect.TypeOf(iface)
+	itype := reflect.TypeOf(iface).Elem()
 	err = ctxb.addHolderForType(hldr, itype)
 	if err != nil {
 		panic(err)

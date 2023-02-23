@@ -17,7 +17,7 @@ func Test_GenericTypeOf(t *testing.T) {
 	}{
 		{
 			gtype:    func() reflect.Type { return genericTypeOf[any]() },
-			expected: "*interface {}",
+			expected: "interface {}",
 		},
 		{
 			gtype:    func() reflect.Type { return genericTypeOf[*Foo]() },
@@ -29,7 +29,7 @@ func Test_GenericTypeOf(t *testing.T) {
 		},
 		{
 			gtype:    func() reflect.Type { return genericTypeOf[Baz]() },
-			expected: "*di.Baz",
+			expected: "di.Baz",
 		},
 		{
 			gtype:    func() reflect.Type { return genericTypeOf[[]Baz]() },

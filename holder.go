@@ -49,15 +49,21 @@ func createLazyHolder(ctor any) (*holder, error) {
 	}
 	prov := func(ctx *Context) (any, error) {
 		args := make([]reflect.Value, numArgs)
-		for i, paramType := range params {
-			if paramType.Kind() == reflect.Slice {
-				argslice, err := ctx.GetAllByType(paramType)
+		for i, ptype := range params {
+			if ptype.Kind() == reflect.Slice {
+				argslice, err := ctx.GetAllByType(ptype.Elem())
 				if err != nil {
 					return nil, err
 				}
-				args[i] = reflect.ValueOf(argslice)
+				rslice := reflect.MakeSlice(ptype, 0, len(argslice))
+				for _, item := range argslice {
+					rslice = reflect.Append(rslice, reflect.ValueOf(item))
+				}
+				args[i] = rslice
+			} else if ptype == genericTypeOf[*Context]() {
+				args[i] = reflect.ValueOf(ctx)
 			} else {
-				arg, err := ctx.GetByType(paramType)
+				arg, err := ctx.GetByType(ptype)
 				if err != nil {
 					return nil, err
 				}
