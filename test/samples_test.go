@@ -1,5 +1,7 @@
 package di_test
 
+import "errors"
+
 type Baz interface{ baz() }
 
 type Foo struct {
@@ -15,6 +17,7 @@ type Bar struct {
 func (b Bar) baz() {}
 
 var (
-	foo Foo = Foo{name: "foo"}
-	bar Bar = Bar{name: "bar"}
+	foo          Foo   = Foo{name: "foo"}
+	bar          Bar   = Bar{name: "bar"}
+	errSimulated error = errors.New("simulated")
 )
