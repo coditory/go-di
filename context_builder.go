@@ -41,6 +41,22 @@ func (ctxb *ContextBuilder) Add(ctor any) {
 	}
 }
 
+func (ctxb *ContextBuilder) AddNamed(name string, ctor any) {
+	hldr, err := createUniqueHolder(ctxb, ctor)
+	if err != nil {
+		panic(err)
+	}
+	err = ctxb.addHolderForName(hldr, name)
+	if err != nil {
+		panic(err)
+	}
+	err = ctxb.addHolderForType(hldr, hldr.providesType)
+	if err != nil {
+		delete(ctxb.holdersByName, name)
+		panic(err)
+	}
+}
+
 func (ctxb *ContextBuilder) AddAs(iface any, ctor any) {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
@@ -49,6 +65,23 @@ func (ctxb *ContextBuilder) AddAs(iface any, ctor any) {
 	itype := reflect.TypeOf(iface).Elem()
 	err = ctxb.addHolderForType(hldr, itype)
 	if err != nil {
+		panic(err)
+	}
+}
+
+func (ctxb *ContextBuilder) AddNamedAs(name string, iface any, ctor any) {
+	hldr, err := createUniqueHolder(ctxb, ctor)
+	if err != nil {
+		panic(err)
+	}
+	err = ctxb.addHolderForName(hldr, name)
+	if err != nil {
+		panic(err)
+	}
+	itype := reflect.TypeOf(iface).Elem()
+	err = ctxb.addHolderForType(hldr, itype)
+	if err != nil {
+		delete(ctxb.holdersByName, name)
 		panic(err)
 	}
 }
@@ -64,6 +97,14 @@ func (ctxb *ContextBuilder) addHolderForType(hldr *holder, itype reflect.Type) e
 		return ErrDuplicatedRegistration
 	}
 	ctxb.holdersByType[itype].Add(hldr)
+	return nil
+}
+
+func (ctxb *ContextBuilder) addHolderForName(hldr *holder, name string) error {
+	if ctxb.holdersByName[name] != nil {
+		return ErrDuplicatedName
+	}
+	ctxb.holdersByName[name] = hldr
 	return nil
 }
 

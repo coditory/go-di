@@ -3,8 +3,9 @@ package di_test
 import (
 	"testing"
 
-	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
+
+	di "github.com/coditory/go-di"
 )
 
 type ConstructorErrorSuite struct {

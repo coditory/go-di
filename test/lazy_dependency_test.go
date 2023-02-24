@@ -5,15 +5,16 @@ import (
 	"reflect"
 	"testing"
 
-	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
+
+	di "github.com/coditory/go-di"
 )
 
-type LazyValueSuite struct {
+type LazyDependencySuite struct {
 	suite.Suite
 }
 
-func (suite *LazyValueSuite) TestGetByType() {
+func (suite *LazyDependencySuite) TestGetByType() {
 	tests := []struct {
 		value   any
 		provide func(ctxb *di.ContextBuilder)
@@ -54,7 +55,7 @@ func (suite *LazyValueSuite) TestGetByType() {
 	}
 }
 
-func (suite *LazyValueSuite) TestGetByInterface() {
+func (suite *LazyDependencySuite) TestGetByInterface() {
 	tests := []struct {
 		value   any
 		iface   any
@@ -94,7 +95,7 @@ func (suite *LazyValueSuite) TestGetByInterface() {
 	}
 }
 
-func (suite *LazyValueSuite) TestGetAllByType() {
+func (suite *LazyDependencySuite) TestGetAllByType() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}
 	ctxb := di.NewContextBuilder()
@@ -106,7 +107,7 @@ func (suite *LazyValueSuite) TestGetAllByType() {
 	suite.Equal([]*Foo{foo1, foo2}, result)
 }
 
-func (suite *LazyValueSuite) TestGetAllByInterface() {
+func (suite *LazyDependencySuite) TestGetAllByInterface() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}
 	ctxb := di.NewContextBuilder()
@@ -118,6 +119,6 @@ func (suite *LazyValueSuite) TestGetAllByInterface() {
 	suite.Equal([]Baz{foo1, foo2}, result)
 }
 
-func TestLazyValueSuite(t *testing.T) {
-	suite.Run(t, new(LazyValueSuite))
+func TestLazyDependencySuite(t *testing.T) {
+	suite.Run(t, new(LazyDependencySuite))
 }

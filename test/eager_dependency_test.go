@@ -5,15 +5,16 @@ import (
 	"reflect"
 	"testing"
 
-	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
+
+	di "github.com/coditory/go-di"
 )
 
-type EagerValueSuite struct {
+type EagerDependencySuite struct {
 	suite.Suite
 }
 
-func (suite *EagerValueSuite) TestGetByType() {
+func (suite *EagerDependencySuite) TestGetByType() {
 	tests := []struct {
 		value any
 		get   func(ctx *di.Context) (any, error)
@@ -49,7 +50,7 @@ func (suite *EagerValueSuite) TestGetByType() {
 	}
 }
 
-func (suite *EagerValueSuite) TestGetByInterface() {
+func (suite *EagerDependencySuite) TestGetByInterface() {
 	tests := []struct {
 		value any
 		iface any
@@ -85,7 +86,7 @@ func (suite *EagerValueSuite) TestGetByInterface() {
 	}
 }
 
-func (suite *EagerValueSuite) TestGetAllByType() {
+func (suite *EagerDependencySuite) TestGetAllByType() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}
 	ctxb := di.NewContextBuilder()
@@ -97,7 +98,7 @@ func (suite *EagerValueSuite) TestGetAllByType() {
 	suite.Equal([]*Foo{foo1, foo2}, result)
 }
 
-func (suite *EagerValueSuite) TestGetAllByInterface() {
+func (suite *EagerDependencySuite) TestGetAllByInterface() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}
 	ctxb := di.NewContextBuilder()
@@ -109,7 +110,7 @@ func (suite *EagerValueSuite) TestGetAllByInterface() {
 	suite.Equal([]Baz{foo1, foo2}, result)
 }
 
-func (suite *EagerValueSuite) TestGetAllMissing() {
+func (suite *EagerDependencySuite) TestGetAllMissing() {
 	ctxb := di.NewContextBuilder()
 	ctx := ctxb.Build()
 	result, err := di.Get[Baz](ctx)
@@ -117,7 +118,7 @@ func (suite *EagerValueSuite) TestGetAllMissing() {
 	suite.Equal(di.ErrMissingObject, err)
 }
 
-func (suite *EagerValueSuite) TestGetMissing() {
+func (suite *EagerDependencySuite) TestGetMissing() {
 	ctxb := di.NewContextBuilder()
 	ctx := ctxb.Build()
 	result, err := di.GetAll[Baz](ctx)
@@ -125,6 +126,6 @@ func (suite *EagerValueSuite) TestGetMissing() {
 	suite.Equal([]Baz{}, result)
 }
 
-func TestEagerValueSuite(t *testing.T) {
-	suite.Run(t, new(EagerValueSuite))
+func TestEagerDependencySuite(t *testing.T) {
+	suite.Run(t, new(EagerDependencySuite))
 }

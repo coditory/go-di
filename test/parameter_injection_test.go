@@ -3,15 +3,16 @@ package di_test
 import (
 	"testing"
 
-	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
+
+	di "github.com/coditory/go-di"
 )
 
-type InjectionSuite struct {
+type ParameterInjectionSuite struct {
 	suite.Suite
 }
 
-func (suite *InjectionSuite) TestInjectParams() {
+func (suite *ParameterInjectionSuite) TestInjectParams() {
 	type Boo struct {
 		foo *Foo
 		bar *Bar
@@ -28,7 +29,7 @@ func (suite *InjectionSuite) TestInjectParams() {
 	suite.Equal(&bar, result.bar)
 }
 
-func (suite *InjectionSuite) TestInjectCastedParam() {
+func (suite *ParameterInjectionSuite) TestInjectCastedParam() {
 	type Boo struct {
 		baz Baz
 	}
@@ -42,7 +43,7 @@ func (suite *InjectionSuite) TestInjectCastedParam() {
 	suite.Equal(&foo, result.baz)
 }
 
-func (suite *InjectionSuite) TestInjectContext() {
+func (suite *ParameterInjectionSuite) TestInjectContext() {
 	type Boo struct {
 		foo *Foo
 		bar *Bar
@@ -64,7 +65,7 @@ func (suite *InjectionSuite) TestInjectContext() {
 	suite.Equal(&bar, result.bar)
 }
 
-func (suite *InjectionSuite) TestInjectMixed() {
+func (suite *ParameterInjectionSuite) TestInjectMixed() {
 	type Boo struct {
 		foo *Foo
 		bar *Bar
@@ -86,7 +87,7 @@ func (suite *InjectionSuite) TestInjectMixed() {
 	suite.Equal(&bar, result.bar)
 }
 
-func (suite *InjectionSuite) TestInjectMissingParam() {
+func (suite *ParameterInjectionSuite) TestInjectMissingParam() {
 	type Boo struct {
 		foo *Foo
 		bar *Bar
@@ -103,7 +104,7 @@ func (suite *InjectionSuite) TestInjectMissingParam() {
 	suite.Equal("missing object", err.Error())
 }
 
-func (suite *InjectionSuite) TestInjectSliceOfInterfaces() {
+func (suite *ParameterInjectionSuite) TestInjectSliceOfInterfaces() {
 	type Boo struct {
 		baz []Baz
 	}
@@ -123,7 +124,7 @@ func (suite *InjectionSuite) TestInjectSliceOfInterfaces() {
 	suite.Equal(&bar, result.baz[1])
 }
 
-func (suite *InjectionSuite) TestInjectSliceOfStructs() {
+func (suite *ParameterInjectionSuite) TestInjectSliceOfStructs() {
 	type Boo struct {
 		foo []Foo
 	}
@@ -143,7 +144,7 @@ func (suite *InjectionSuite) TestInjectSliceOfStructs() {
 	suite.Equal("second", result.foo[1].name)
 }
 
-func (suite *InjectionSuite) TestInjectSliceOfStructPtrs() {
+func (suite *ParameterInjectionSuite) TestInjectSliceOfStructPtrs() {
 	type Boo struct {
 		foo []*Foo
 	}
@@ -163,6 +164,6 @@ func (suite *InjectionSuite) TestInjectSliceOfStructPtrs() {
 	suite.Equal("second", result.foo[1].name)
 }
 
-func TestInjectionSuite(t *testing.T) {
-	suite.Run(t, new(InjectionSuite))
+func TestParameterInjectionSuite(t *testing.T) {
+	suite.Run(t, new(ParameterInjectionSuite))
 }

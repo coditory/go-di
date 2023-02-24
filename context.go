@@ -21,6 +21,26 @@ type Context struct {
 	holdersByName map[string]*holder
 }
 
+func (ctx *Context) GetNamed(name string) (any, error) {
+	holder := ctx.holdersByName[name]
+	if holder == nil {
+		return empty[any](), ErrMissingObject
+	}
+	depCtx, err := dependencyContext(ctx, holder)
+	if err != nil {
+		return empty[any](), err
+	}
+	obj, err := holder.getOrCreate(depCtx)
+	if err != nil {
+		if !errors.Is(err, ErrSkipped) {
+			return empty[any](), err
+		}
+	} else {
+		return obj, nil
+	}
+	return empty[any](), ErrMissingObject
+}
+
 func (ctx *Context) GetByType(otype reflect.Type) (any, error) {
 	holders := ctx.holdersByType[otype]
 	if holders == nil {
@@ -74,6 +94,27 @@ func GetOrPanic[T any](ctx *Context) T {
 func Get[T any](ctx *Context) (T, error) {
 	ttype := genericTypeOf[T]()
 	obj, err := ctx.GetByType(ttype)
+	if err != nil {
+		return empty[T](), err
+	}
+	typed, ok := obj.(T)
+	if !ok {
+		return empty[T](), fmt.Errorf("invalid type - could not cast %T to %s", obj, ttype)
+	}
+	return typed, nil
+}
+
+func GetNamedOrPanic[T any](ctx *Context, name string) T {
+	obj, err := GetNamed[T](ctx, name)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+func GetNamed[T any](ctx *Context, name string) (T, error) {
+	ttype := genericTypeOf[T]()
+	obj, err := ctx.GetNamed(name)
 	if err != nil {
 		return empty[T](), err
 	}
