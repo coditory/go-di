@@ -20,11 +20,9 @@ func (suite *NamedDependencySuite) TestGetNamedDependencyByName() {
 	ctxb.AddNamed("foo1", &foo1)
 	ctxb.AddNamed("foo2", &foo2)
 	ctx := ctxb.Build()
-	result, err := di.GetNamedOrErr[*Foo](ctx, "foo1")
-	suite.Nil(err)
+	result := di.GetNamed[*Foo](ctx, "foo1")
 	suite.Equal(&foo1, result)
-	result, err = di.GetNamedOrErr[*Foo](ctx, "foo2")
-	suite.Nil(err)
+	result = di.GetNamed[*Foo](ctx, "foo2")
 	suite.Equal(&foo2, result)
 }
 
@@ -36,11 +34,9 @@ func (suite *NamedDependencySuite) TestGetNamedDependencyByType() {
 	ctxb.AddNamed("foo2", &foo2)
 	ctxb.Add(&foo)
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Foo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Foo](ctx)
 	suite.Equal(&foo1, result)
-	all, err := di.GetAllOrErr[*Foo](ctx)
-	suite.Nil(err)
+	all := di.GetAll[*Foo](ctx)
 	suite.Equal([]*Foo{&foo1, &foo2, &foo}, all)
 }
 

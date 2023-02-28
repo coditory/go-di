@@ -124,8 +124,7 @@ func (suite *CyclicDependencySuite) TestNoErrorThrownWhenNotRetrieved() {
 		return &bar
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Bar](ctx)
-	suite.Nil(err)
+	result := di.Get[*Bar](ctx)
 	suite.Equal(&bar, result)
 }
 

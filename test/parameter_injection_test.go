@@ -24,8 +24,7 @@ func (suite *ParameterInjectionSuite) TestInjectParams() {
 		return &Boo{foo: pfoo, bar: pbar}
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Boo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Boo](ctx)
 	suite.NotNil(result)
 	suite.Equal(&foo, result.foo)
 	suite.Equal(&bar, result.bar)
@@ -41,8 +40,7 @@ func (suite *ParameterInjectionSuite) TestInjectCastedParam() {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Boo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Boo](ctx)
 	suite.NotNil(result)
 	suite.Equal(&foo, result.baz)
 }
@@ -62,8 +60,7 @@ func (suite *ParameterInjectionSuite) TestInjectContext() {
 		}
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Boo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Boo](ctx)
 	suite.NotNil(result)
 	suite.Equal(&foo, result.foo)
 	suite.Equal(&bar, result.bar)
@@ -84,8 +81,7 @@ func (suite *ParameterInjectionSuite) TestInjectMixed() {
 		}
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Boo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Boo](ctx)
 	suite.NotNil(result)
 	suite.Equal(&foo, result.foo)
 	suite.Equal(&bar, result.bar)
@@ -119,8 +115,7 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfInterfaces() {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Boo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Boo](ctx)
 	suite.NotNil(result)
 	suite.NotNil(result.baz)
 	suite.Equal(2, len(result.baz))
@@ -139,8 +134,7 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfStructs() {
 		return &Boo{foo: foo}
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Boo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Boo](ctx)
 	suite.NotNil(result)
 	suite.NotNil(result.foo)
 	suite.Equal(2, len(result.foo))
@@ -159,8 +153,7 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfStructPtrs() {
 		return &Boo{foo: foo}
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Boo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Boo](ctx)
 	suite.NotNil(result)
 	suite.NotNil(result.foo)
 	suite.Equal(2, len(result.foo))

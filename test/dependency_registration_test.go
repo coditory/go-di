@@ -17,23 +17,23 @@ type DependencyRegistrationSuite struct {
 func (suite *DependencyRegistrationSuite) TestGetByType() {
 	tests := []struct {
 		value any
-		get   func(ctx *di.Context) (any, error)
+		get   func(ctx *di.Context) any
 	}{
 		{
 			value: &foo,
-			get:   func(ctx *di.Context) (any, error) { return di.GetOrErr[*Foo](ctx) },
+			get:   func(ctx *di.Context) any { return di.Get[*Foo](ctx) },
 		},
 		{
 			value: foo,
-			get:   func(ctx *di.Context) (any, error) { return di.GetOrErr[Foo](ctx) },
+			get:   func(ctx *di.Context) any { return di.Get[Foo](ctx) },
 		},
 		{
 			value: 42,
-			get:   func(ctx *di.Context) (any, error) { return di.GetOrErr[int](ctx) },
+			get:   func(ctx *di.Context) any { return di.Get[int](ctx) },
 		},
 		{
 			value: "text",
-			get:   func(ctx *di.Context) (any, error) { return di.GetOrErr[string](ctx) },
+			get:   func(ctx *di.Context) any { return di.Get[string](ctx) },
 		},
 	}
 
@@ -43,8 +43,7 @@ func (suite *DependencyRegistrationSuite) TestGetByType() {
 			ctxb := di.NewContextBuilder()
 			ctxb.Add(tt.value)
 			ctx := ctxb.Build()
-			result, err := tt.get(ctx)
-			suite.Nil(err)
+			result := tt.get(ctx)
 			suite.Equal(tt.value, result)
 		})
 	}

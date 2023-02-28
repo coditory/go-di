@@ -57,7 +57,7 @@ coverage: ## Run tests and create coverage report
 	$(call task,coverage)
 	@rm -rf $(REPORT_DIR)/test
 	@mkdir -p $(REPORT_DIR)/test
-	@go test -covermode=count -coverprofile=$(REPORT_DIR)/test/coverage.out -v ./... \
+	@go test -cover -covermode=atomic -coverpkg=./... -coverprofile=$(REPORT_DIR)/test/coverage.out -v ./... \
 		| tee >($(GOJUNITREP_CMD) -set-exit-code > $(REPORT_DIR)/test/junit-report.xml)
 	@go tool cover -html=$(REPORT_DIR)/test/coverage.out -o $(REPORT_DIR)/test/coverage.html
 

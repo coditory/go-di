@@ -18,16 +18,10 @@ func (suite *DuplicatedRegistartionSuite) TestWithFunction() {
 	inits := 0
 	ctor := func() *Foo { inits++; return &Foo{} }
 	ctxb := di.NewContextBuilder()
-	err := func() (err any) {
-		defer func() {
-			err = recover()
-		}()
-		ctxb.Add(ctor)
-		ctxb.Add(ctor)
-		return nil
-	}()
+	ctxb.Add(ctor)
+	err := ctxb.AddOrErr(ctor)
 	suite.NotNil(err)
-	suite.Equal("duplicated registration", err.(error).Error())
+	suite.Equal("duplicated registration", err.Error())
 	suite.Equal(0, inits)
 }
 

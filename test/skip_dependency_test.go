@@ -43,8 +43,7 @@ func (suite *SkipDependencySuite) TestResolveSliceWithNonSkippedDependnecies() {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()
-	result, err := di.GetOrErr[*Boo](ctx)
-	suite.Nil(err)
+	result := di.Get[*Boo](ctx)
 	suite.NotNil(result)
 	suite.NotNil(result.baz)
 	suite.Equal(1, len(result.baz))
