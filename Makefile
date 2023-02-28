@@ -57,19 +57,20 @@ test: ## Run tests
 	@rm -rf $(REPORT_DIR)/tests
 	@mkdir -p $(REPORT_DIR)/tests
 	@go test -v -race ./... \
-		| tee >($(GOJUNITREP_CMD) -set-exit-code > $(REPORT_DIR)/tests/junit-report.xml)
+		| tee >($(GOJUNITREP_CMD) -set-exit-code > $(REPORT_DIR)/test/junit-report.xml)
 
 .PHONY: coverage
 coverage: ## Run tests and create coverage report
 	$(call task,coverage)
 	@rm -rf $(REPORT_DIR)/tests
 	@mkdir -p $(REPORT_DIR)/tests
-	@go test -cover -covermode=count -coverprofile=$(REPORT_DIR)/tests/profile.cov -v ./... \
-		| tee >($(GOJUNITREP_CMD) -set-exit-code > $(REPORT_DIR)/tests/junit-report.xml)
-	@go tool cover -func $(REPORT_DIR)/tests/profile.cov
-	@go tool cover -html=$(REPORT_DIR)/tests/profile.cov -o $(REPORT_DIR)/tests/coverage.html
-	@$(GOCOV_CMD) convert $(REPORT_DIR)/tests/profile.cov \
-		| $(GOCOVXML_CMD) > $(REPORT_DIR)/tests/coverage.xml
+	@go test -cover -covermode=count -coverprofile=$(REPORT_DIR)/test/profile.cov -v ./...
+	# @go test -cover -covermode=count -coverprofile=$(REPORT_DIR)/test/profile.cov -v ./... \
+	#	| tee >($(GOJUNITREP_CMD) -set-exit-code > $(REPORT_DIR)/test/junit-report.xml)
+	@go tool cover -func $(REPORT_DIR)/test/profile.cov
+	@go tool cover -html=$(REPORT_DIR)/test/profile.cov -o $(REPORT_DIR)/test/coverage.html
+	@$(GOCOV_CMD) convert $(REPORT_DIR)/test/profile.cov \
+		| $(GOCOVXML_CMD) > $(REPORT_DIR)/test/coverage.xml
 
 ## Lint:
 .PHONY: lint

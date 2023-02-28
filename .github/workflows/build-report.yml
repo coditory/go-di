@@ -46,7 +46,7 @@ jobs:
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
           annotations_limit: 10
-          report_paths: "**/build/test-results/**/TEST*.xml"
+          report_paths: "out/test/junit-report.xml"
 
       - name: Publish coverage report
         uses: codecov/codecov-action@v3
@@ -56,4 +56,4 @@ jobs:
           override_commit: ${{ github.event.workflow_run.head_sha }}
           override_branch: ${{ github.event.workflow_run.head_branch }}
           override_build: ${{ github.event.workflow_run.id }}
-          files: "build/reports/jacoco/coverage/coverage.xml"
+          files: "out/test/coverage.xml"
