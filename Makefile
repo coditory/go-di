@@ -5,7 +5,6 @@ OUT_DIR = out
 BIN_DIR = $(OUT_DIR)/bin
 REPORT_DIR = $(OUT_DIR)/report
 VERSION = $(shell git tag --list --sort=-version:refname "v*" | head -n 1 | grep "." || echo "v0.0.0")
-EXPORT_RESULT ?= false # on CI, set EXPORT_RESULT = true
 
 COLORS ?= true
 RED    := $(if $(findstring $(COLORS),true),$(shell tput -Txterm setaf 1))

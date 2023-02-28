@@ -28,4 +28,6 @@ jobs:
           name: build-reports
           retention-days: 7
           path: |
-            out/**/*.{xml,html,cov}
+            out/**/*.xml
+            out/**/*.html
+            out/**/*.cov
