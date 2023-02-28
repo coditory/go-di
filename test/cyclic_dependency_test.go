@@ -85,7 +85,7 @@ func (suite *CyclicDependencySuite) TestCyclicDependencyWithInjection() {
 			ctxb := di.NewContextBuilder()
 			tt.register(ctxb)
 			ctx := ctxb.Build()
-			result, err := di.Get[*cyclicFoo](ctx)
+			result, err := di.GetOrErr[*cyclicFoo](ctx)
 			suite.Nil(result)
 			suite.Equal(strings.Join([]string{
 				"could not create dependency *di_test.cyclicFoo, cause:",
@@ -107,7 +107,7 @@ func (suite *CyclicDependencySuite) TestCyclicDependencyOfOne() {
 		return foo
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Foo](ctx)
+	result, err := di.GetOrErr[*Foo](ctx)
 	suite.Nil(result)
 	suite.Equal("could not create dependency *di_test.Foo, cause:\ncyclic dependency: *di_test.Foo -> *di_test.Foo", err.Error())
 	suite.IsType(new(di.DependencyCreationError), err)
@@ -124,7 +124,7 @@ func (suite *CyclicDependencySuite) TestNoErrorThrownWhenNotRetrieved() {
 		return &bar
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Bar](ctx)
+	result, err := di.GetOrErr[*Bar](ctx)
 	suite.Nil(err)
 	suite.Equal(&bar, result)
 }

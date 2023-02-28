@@ -31,72 +31,100 @@ func (ctxb *ContextBuilder) Build() *Context {
 }
 
 func (ctxb *ContextBuilder) Add(ctor any) {
+	if err := ctxb.AddOrErr(ctor); err != nil {
+		panic(err)
+	}
+}
+
+func (ctxb *ContextBuilder) AddOrErr(ctor any) error {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = ctxb.addHolderForType(hldr, hldr.providesType)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func (ctxb *ContextBuilder) AddNamed(name string, ctor any) {
+	if err := ctxb.AddNamedOrErr(name, ctor); err != nil {
+		panic(err)
+	}
+}
+
+func (ctxb *ContextBuilder) AddNamedOrErr(name string, ctor any) error {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = ctxb.addHolderForName(hldr, name)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = ctxb.addHolderForType(hldr, hldr.providesType)
 	if err != nil {
 		delete(ctxb.holdersByName, name)
+		return err
+	}
+	return nil
+}
+
+func (ctxb *ContextBuilder) AddAs(atype any, ctor any) {
+	if err := ctxb.AddAsOrErr(atype, ctor); err != nil {
 		panic(err)
 	}
 }
 
-func (ctxb *ContextBuilder) AddAs(iface any, ctor any) {
+func (ctxb *ContextBuilder) AddAsOrErr(atype any, ctor any) error {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	itype := reflect.TypeOf(iface).Elem()
-	err = ctxb.addHolderForType(hldr, itype)
+	rtype := reflect.TypeOf(atype).Elem()
+	err = ctxb.addHolderForType(hldr, rtype)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ctxb *ContextBuilder) AddNamedAs(name string, atype any, ctor any) {
+	if err := ctxb.AddNamedAsOrErr(name, atype, ctor); err != nil {
 		panic(err)
 	}
 }
 
-func (ctxb *ContextBuilder) AddNamedAs(name string, iface any, ctor any) {
+func (ctxb *ContextBuilder) AddNamedAsOrErr(name string, atype any, ctor any) error {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = ctxb.addHolderForName(hldr, name)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	itype := reflect.TypeOf(iface).Elem()
-	err = ctxb.addHolderForType(hldr, itype)
+	rtype := reflect.TypeOf(atype).Elem()
+	err = ctxb.addHolderForType(hldr, rtype)
 	if err != nil {
 		delete(ctxb.holdersByName, name)
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (ctxb *ContextBuilder) addHolderForType(hldr *holder, itype reflect.Type) error {
-	if hldr.providesType != itype && !hldr.providesType.AssignableTo(itype) {
-		return &InvalidTypeError{objType: hldr.providesType, expectedType: itype}
+func (ctxb *ContextBuilder) addHolderForType(hldr *holder, rtype reflect.Type) error {
+	if hldr.providesType != rtype && !hldr.providesType.AssignableTo(rtype) {
+		return &InvalidTypeError{objType: hldr.providesType, expectedType: rtype}
 	}
-	if ctxb.holdersByType[itype] == nil {
-		ctxb.holdersByType[itype] = NewSet[*holder]()
+	if ctxb.holdersByType[rtype] == nil {
+		ctxb.holdersByType[rtype] = NewSet[*holder]()
 	}
-	if ctxb.holdersByType[itype].Contains(hldr) {
+	if ctxb.holdersByType[rtype].Contains(hldr) {
 		return ErrDuplicatedRegistration
 	}
-	ctxb.holdersByType[itype].Add(hldr)
+	ctxb.holdersByType[rtype].Add(hldr)
 	return nil
 }
 

@@ -24,7 +24,7 @@ func (suite *ParameterInjectionSuite) TestInjectParams() {
 		return &Boo{foo: pfoo, bar: pbar}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(err)
 	suite.NotNil(result)
 	suite.Equal(&foo, result.foo)
@@ -41,7 +41,7 @@ func (suite *ParameterInjectionSuite) TestInjectCastedParam() {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(err)
 	suite.NotNil(result)
 	suite.Equal(&foo, result.baz)
@@ -62,7 +62,7 @@ func (suite *ParameterInjectionSuite) TestInjectContext() {
 		}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(err)
 	suite.NotNil(result)
 	suite.Equal(&foo, result.foo)
@@ -84,7 +84,7 @@ func (suite *ParameterInjectionSuite) TestInjectMixed() {
 		}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(err)
 	suite.NotNil(result)
 	suite.Equal(&foo, result.foo)
@@ -102,7 +102,7 @@ func (suite *ParameterInjectionSuite) TestInjectMissingParam() {
 		return &Boo{foo: foo, bar: bar}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(result)
 	suite.NotNil(err)
 	suite.Equal("could not create dependency *di_test.Boo, cause:\nmissing dependency *di_test.Bar", err.Error())
@@ -119,7 +119,7 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfInterfaces() {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(err)
 	suite.NotNil(result)
 	suite.NotNil(result.baz)
@@ -139,7 +139,7 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfStructs() {
 		return &Boo{foo: foo}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(err)
 	suite.NotNil(result)
 	suite.NotNil(result.foo)
@@ -159,7 +159,7 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfStructPtrs() {
 		return &Boo{foo: foo}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(err)
 	suite.NotNil(result)
 	suite.NotNil(result.foo)

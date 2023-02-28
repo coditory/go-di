@@ -50,7 +50,7 @@ func createLazyHolder(ctor any) (*holder, error) {
 		args := make([]reflect.Value, numArgs)
 		for i, ptype := range params {
 			if ptype.Kind() == reflect.Slice {
-				argslice, err := ctx.GetAllByType(ptype.Elem())
+				argslice, err := ctx.getAllByRType(ptype.Elem())
 				if err != nil {
 					return nil, err
 				}
@@ -62,7 +62,7 @@ func createLazyHolder(ctor any) (*holder, error) {
 			} else if ptype == genericTypeOf[*Context]() {
 				args[i] = reflect.ValueOf(ctx)
 			} else {
-				arg, err := ctx.getByType(ptype)
+				arg, err := ctx.getByRType(ptype)
 				if err != nil {
 					return nil, err
 				}

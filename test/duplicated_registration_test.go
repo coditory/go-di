@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
+
+	di "github.com/coditory/go-di"
 )
 
 type DuplicatedRegistartionSuite struct {
@@ -46,16 +47,10 @@ func (suite *DuplicatedRegistartionSuite) TestForbiddenDuplicatedPointers() {
 		desc := fmt.Sprintf("%s-%+v", reflect.TypeOf(tt.value), tt.value)
 		suite.Run(desc, func() {
 			ctxb := di.NewContextBuilder()
-			err := func() (err any) {
-				defer func() {
-					err = recover()
-				}()
-				ctxb.Add(tt.value)
-				ctxb.Add(tt.value)
-				return nil
-			}()
+			ctxb.Add(tt.value)
+			err := ctxb.AddOrErr(tt.value)
 			suite.NotNil(err)
-			suite.Equal("duplicated registration", err.(error).Error())
+			suite.Equal("duplicated registration", err.Error())
 		})
 	}
 }
@@ -63,31 +58,24 @@ func (suite *DuplicatedRegistartionSuite) TestForbiddenDuplicatedPointers() {
 func (suite *DuplicatedRegistartionSuite) TestAllowDuplicatedNonPointers() {
 	tests := []struct {
 		value any
+		atype any
 	}{
-		{value: make([]string, 1)},
-		{value: []string{"abc"}},
-		{value: make(map[int]string)},
-		{value: "abc"},
-		{value: 42},
-		{value: foo},
+		{value: make([]string, 1), atype: new([]string)},
+		{value: []string{"abc"}, atype: new([]string)},
+		{value: make(map[int]string), atype: new(map[int]string)},
+		{value: "abc", atype: new(string)},
+		{value: 42, atype: new(int)},
+		{value: foo, atype: new(Foo)},
 	}
 
 	for _, tt := range tests {
 		desc := fmt.Sprintf("%s-%+v", reflect.TypeOf(tt.value), tt.value)
 		suite.Run(desc, func() {
 			ctxb := di.NewContextBuilder()
-			err := func() (err any) {
-				defer func() {
-					err = recover()
-				}()
-				ctxb.Add(tt.value)
-				ctxb.Add(tt.value)
-				return nil
-			}()
-			suite.Nil(err)
+			ctxb.Add(tt.value)
+			ctxb.Add(tt.value)
 			ctx := ctxb.Build()
-			objs, err := ctx.GetAllByType(reflect.TypeOf(tt.value))
-			suite.Nil(err)
+			objs := ctx.GetAllByType(tt.atype)
 			suite.Equal(2, len(objs))
 			suite.Equal(tt.value, objs[0])
 			suite.Equal(tt.value, objs[1])

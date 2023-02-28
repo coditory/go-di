@@ -18,7 +18,7 @@ func (suite *CreationErrorSuite) TestErrorResult() {
 		return nil, errSimulated
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Foo](ctx)
+	result, err := di.GetOrErr[*Foo](ctx)
 	suite.Nil(result)
 	suite.Equal("could not create dependency *di_test.Foo, cause:\nsimulated", err.Error())
 	suite.IsType(new(di.DependencyCreationError), err)
@@ -31,7 +31,7 @@ func (suite *CreationErrorSuite) TestPanic() {
 		panic(errSimulated)
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Foo](ctx)
+	result, err := di.GetOrErr[*Foo](ctx)
 	suite.Nil(result)
 	suite.IsType(new(di.DependencyCreationError), err)
 	suite.ErrorIs(err, errSimulated)
@@ -50,7 +50,7 @@ func (suite *CreationErrorSuite) TestPropagateErrorOnDependencySlice() {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()
-	result, err := di.Get[*Boo](ctx)
+	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(result)
 	suite.Equal("could not create dependency *di_test.Boo, cause:\ncould not create dependency di_test.Baz, cause:\nsimulated", err.Error())
 	suite.IsType(new(di.DependencyCreationError), err)

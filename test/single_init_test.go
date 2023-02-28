@@ -16,9 +16,9 @@ func (suite *SingleInitSuite) TestMultipleGet() {
 	ctxb := di.NewContextBuilder()
 	ctxb.Add(func() *Foo { inits++; return &foo })
 	ctx := ctxb.Build()
-	_, _ = di.Get[*Foo](ctx)
-	_, _ = di.Get[*Foo](ctx)
-	_, _ = di.GetAll[*Foo](ctx)
+	_, _ = di.GetOrErr[*Foo](ctx)
+	_, _ = di.GetOrErr[*Foo](ctx)
+	_, _ = di.GetAllOrErr[*Foo](ctx)
 	suite.Equal(1, inits)
 }
 
@@ -29,8 +29,8 @@ func (suite *SingleInitSuite) TestMultipleAddDifferentTypes() {
 	ctxb.Add(ctor)
 	ctxb.AddAs(new(Baz), ctor)
 	ctx := ctxb.Build()
-	rfoo, _ := di.Get[*Foo](ctx)
-	rbaz, _ := di.Get[Baz](ctx)
+	rfoo, _ := di.GetOrErr[*Foo](ctx)
+	rbaz, _ := di.GetOrErr[Baz](ctx)
 	suite.Equal(1, inits)
 	suite.Equal(rbaz, rfoo)
 }

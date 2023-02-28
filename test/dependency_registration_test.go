@@ -21,19 +21,19 @@ func (suite *DependencyRegistrationSuite) TestGetByType() {
 	}{
 		{
 			value: &foo,
-			get:   func(ctx *di.Context) (any, error) { return di.Get[*Foo](ctx) },
+			get:   func(ctx *di.Context) (any, error) { return di.GetOrErr[*Foo](ctx) },
 		},
 		{
 			value: foo,
-			get:   func(ctx *di.Context) (any, error) { return di.Get[Foo](ctx) },
+			get:   func(ctx *di.Context) (any, error) { return di.GetOrErr[Foo](ctx) },
 		},
 		{
 			value: 42,
-			get:   func(ctx *di.Context) (any, error) { return di.Get[int](ctx) },
+			get:   func(ctx *di.Context) (any, error) { return di.GetOrErr[int](ctx) },
 		},
 		{
 			value: "text",
-			get:   func(ctx *di.Context) (any, error) { return di.Get[string](ctx) },
+			get:   func(ctx *di.Context) (any, error) { return di.GetOrErr[string](ctx) },
 		},
 	}
 
@@ -54,22 +54,22 @@ func (suite *DependencyRegistrationSuite) TestGetByInterface() {
 	tests := []struct {
 		value any
 		iface any
-		get   func(ctx *di.Context) (any, error)
+		get   func(ctx *di.Context) any
 	}{
 		{
 			value: &foo,
 			iface: new(Baz),
-			get:   func(ctx *di.Context) (any, error) { return di.Get[Baz](ctx) },
+			get:   func(ctx *di.Context) any { return di.Get[Baz](ctx) },
 		},
 		{
 			value: (*Foo)(nil),
 			iface: new(Baz),
-			get:   func(ctx *di.Context) (any, error) { return di.Get[Baz](ctx) },
+			get:   func(ctx *di.Context) any { return di.Get[Baz](ctx) },
 		},
 		{
 			value: bar,
 			iface: new(Baz),
-			get:   func(ctx *di.Context) (any, error) { return di.Get[Baz](ctx) },
+			get:   func(ctx *di.Context) any { return di.Get[Baz](ctx) },
 		},
 	}
 
@@ -79,8 +79,7 @@ func (suite *DependencyRegistrationSuite) TestGetByInterface() {
 			ctxb := di.NewContextBuilder()
 			ctxb.AddAs(tt.iface, tt.value)
 			ctx := ctxb.Build()
-			result, err := tt.get(ctx)
-			suite.Nil(err)
+			result := tt.get(ctx)
 			suite.Equal(tt.value, result)
 		})
 	}
@@ -93,8 +92,7 @@ func (suite *DependencyRegistrationSuite) TestGetAllByType() {
 	ctxb.Add(foo1)
 	ctxb.Add(foo2)
 	ctx := ctxb.Build()
-	result, err := di.GetAll[*Foo](ctx)
-	suite.Nil(err)
+	result := di.GetAll[*Foo](ctx)
 	suite.Equal([]*Foo{foo1, foo2}, result)
 }
 
@@ -105,15 +103,14 @@ func (suite *DependencyRegistrationSuite) TestGetAllByInterface() {
 	ctxb.AddAs(new(Baz), foo1)
 	ctxb.AddAs(new(Baz), foo2)
 	ctx := ctxb.Build()
-	result, err := di.GetAll[Baz](ctx)
-	suite.Nil(err)
+	result := di.GetAll[Baz](ctx)
 	suite.Equal([]Baz{foo1, foo2}, result)
 }
 
 func (suite *DependencyRegistrationSuite) TestGetAllMissing() {
 	ctxb := di.NewContextBuilder()
 	ctx := ctxb.Build()
-	result, err := di.Get[Baz](ctx)
+	result, err := di.GetOrErr[Baz](ctx)
 	suite.Nil(result)
 	suite.Equal("missing dependency di_test.Baz", err.Error())
 	suite.IsType(new(di.MissingDependencyError), err)
@@ -122,8 +119,7 @@ func (suite *DependencyRegistrationSuite) TestGetAllMissing() {
 func (suite *DependencyRegistrationSuite) TestGetMissing() {
 	ctxb := di.NewContextBuilder()
 	ctx := ctxb.Build()
-	result, err := di.GetAll[Baz](ctx)
-	suite.Nil(err)
+	result := di.GetAll[Baz](ctx)
 	suite.Equal([]Baz{}, result)
 }
 

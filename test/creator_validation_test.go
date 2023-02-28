@@ -43,13 +43,7 @@ func (suite *CreatorValidationSuite) TestErrorResult() {
 	for _, tt := range tests {
 		suite.Run(tt.title, func() {
 			ctxb := di.NewContextBuilder()
-			err := func() (err error) {
-				defer func() {
-					err = recover().(error)
-				}()
-				ctxb.Add(tt.ctor)
-				return nil
-			}()
+			err := ctxb.AddOrErr(tt.ctor)
 			suite.Equal(tt.error, err.Error())
 		})
 	}

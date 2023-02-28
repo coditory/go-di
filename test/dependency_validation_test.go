@@ -51,13 +51,7 @@ func (suite *DependencyValidationSuite) TestInvalidTypesOnAddAs() {
 		desc := fmt.Sprintf("%s %+v", reflect.TypeOf(tt.value), tt.value)
 		suite.Run(desc, func() {
 			ctxb := di.NewContextBuilder()
-			err := func() (err error) {
-				defer func() {
-					err = recover().(error)
-				}()
-				ctxb.AddAs(tt.asType, tt.value)
-				return nil
-			}()
+			err := ctxb.AddAsOrErr(tt.asType, tt.value)
 			suite.NotNil(err)
 			suite.Equal(tt.message, err.Error())
 			suite.IsType(new(di.InvalidTypeError), err)

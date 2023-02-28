@@ -37,7 +37,7 @@ func Test_TransitiveDependency(t *testing.T) {
 	ctxb.Add(provideTransitiveBar)
 	ctxb.Add(provideTransitiveBaz)
 	ctx := ctxb.Build()
-	result, err := di.Get[*transitiveFoo](ctx)
+	result, err := di.GetOrErr[*transitiveFoo](ctx)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.NotNil(t, result.bar)

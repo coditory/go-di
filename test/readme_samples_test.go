@@ -52,7 +52,7 @@ func (suite *ReadmeSamplesSuite) TestDependencyRetrievalByInterface() {
 	ctxb.AddAs(new(Named), &bar)
 	ctx := ctxb.Build()
 	suite.Equal(&foo, di.GetOrPanic[Named](ctx))
-	suite.Equal([]Named{&foo, &foo2, &bar}, di.GetAllOrPanic[Named](ctx))
+	suite.Equal([]Named{&foo, &foo2, &bar}, di.GetAll[Named](ctx))
 }
 
 func (suite *ReadmeSamplesSuite) TestNamedDependencyRegistration() {
@@ -66,9 +66,9 @@ func (suite *ReadmeSamplesSuite) TestNamedDependencyRegistration() {
 	ctxb.Add(&foo)
 	ctx := ctxb.Build()
 	suite.Equal(&foo1, di.GetOrPanic[*Foo](ctx))
-	suite.Equal(&foo1, di.GetNamedOrPanic[*Foo](ctx, "foo1"))
-	suite.Equal(&foo2, di.GetNamedOrPanic[*Foo](ctx, "foo2"))
-	suite.Equal([]*Foo{&foo1, &foo2, &foo}, di.GetAllOrPanic[*Foo](ctx))
+	suite.Equal(&foo1, di.GetNamed[*Foo](ctx, "foo1"))
+	suite.Equal(&foo2, di.GetNamed[*Foo](ctx, "foo2"))
+	suite.Equal([]*Foo{&foo1, &foo2, &foo}, di.GetAll[*Foo](ctx))
 }
 
 func TestReadmeSamplesSuite(t *testing.T) {
