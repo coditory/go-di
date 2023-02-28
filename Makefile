@@ -15,12 +15,12 @@ CYAN   := $(if $(findstring $(COLORS),true),$(shell tput -Txterm setaf 6))
 RESET  := $(if $(findstring $(COLORS),true),$(shell tput -Txterm sgr0))
 
 # Tools
-GOFUMPT_CMD = go run mvdan.cc/gofumpt@latest
+GOFUMPT_CMD = go run mvdan.cc/gofumpt@v0.4.0
 GOJUNITREP_CMD = go run github.com/jstemmer/go-junit-report/v2@v2.0.0
 GOWEIGHT_CMD = go run github.com/jondot/goweight@latest
 GOMODOUTDATED_CMD = go run github.com/psampaz/go-mod-outdated@latest
 # Dockerized tools
-GOLANGCI_LINT_VERSION = v1.51.1
+GOLANGCI_LINT_VERSION = v1.51.2
 
 define task
  @echo "${CYAN}>>> $(1)${RESET}"
