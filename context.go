@@ -6,17 +6,8 @@ import (
 	"reflect"
 )
 
-var (
-	ErrMissingObject          = errors.New("missing object")
-	ErrInvalidType            = errors.New("invalid type")
-	ErrDuplicatedName         = errors.New("duplicated name")
-	ErrDuplicatedRegistration = errors.New("duplicated registration")
-	ErrDependencyCycle        = errors.New("dependency cycle")
-	ErrSkipped                = errors.New("registration skipped")
-)
-
 type Context struct {
-	path          map[*holder]int
+	path          map[string]int
 	holdersByType map[reflect.Type][]*holder
 	holdersByName map[string]*holder
 }
@@ -24,57 +15,60 @@ type Context struct {
 func (ctx *Context) GetNamed(name string) (any, error) {
 	holder := ctx.holdersByName[name]
 	if holder == nil {
-		return empty[any](), ErrMissingObject
+		return empty[any](), &MissingDependencyError{objName: &name}
 	}
-	depCtx, err := dependencyContext(ctx, holder)
+	depCtx, err := dependencyContext(ctx, descriptor(&name, nil))
 	if err != nil {
 		return empty[any](), err
 	}
 	obj, err := holder.getOrCreate(depCtx)
 	if err != nil {
-		if !errors.Is(err, ErrSkipped) {
-			return empty[any](), err
+		if !errors.Is(err, ErrSkippedDependency) {
+			creationErr := &DependencyCreationError{objName: &name, err: err}
+			return empty[any](), creationErr
 		}
 	} else {
 		return obj, nil
 	}
-	return empty[any](), ErrMissingObject
+	return empty[any](), &MissingDependencyError{objName: &name}
 }
 
-func (ctx *Context) GetByType(otype reflect.Type) (any, error) {
+func (ctx *Context) getByType(otype reflect.Type) (any, error) {
 	holders := ctx.holdersByType[otype]
 	if holders == nil {
-		return empty[any](), ErrMissingObject
+		return empty[any](), &MissingDependencyError{objType: &otype}
 	}
 	for _, holder := range holders {
-		depCtx, err := dependencyContext(ctx, holder)
+		depCtx, err := dependencyContext(ctx, descriptor(nil, &otype))
 		if err != nil {
 			return empty[any](), err
 		}
 		obj, err := holder.getOrCreate(depCtx)
 		if err != nil {
-			if !errors.Is(err, ErrSkipped) {
-				return empty[any](), err
+			if !errors.Is(err, ErrSkippedDependency) {
+				creationErr := &DependencyCreationError{objType: &otype, err: err}
+				return empty[any](), creationErr
 			}
 		} else {
 			return obj, nil
 		}
 	}
-	return empty[any](), ErrMissingObject
+	return empty[any](), &MissingDependencyError{objType: &otype}
 }
 
 func (ctx *Context) GetAllByType(otype reflect.Type) ([]any, error) {
 	holders := ctx.holdersByType[otype]
 	result := make([]any, 0)
 	for _, holder := range holders {
-		depCtx, err := dependencyContext(ctx, holder)
+		depCtx, err := dependencyContext(ctx, descriptor(nil, &otype))
 		if err != nil {
 			return nil, err
 		}
 		obj, err := holder.getOrCreate(depCtx)
 		if err != nil {
-			if !errors.Is(err, ErrSkipped) {
-				return nil, err
+			if !errors.Is(err, ErrSkippedDependency) {
+				creationErr := &DependencyCreationError{objType: &otype, err: err}
+				return nil, creationErr
 			}
 		} else {
 			result = append(result, obj)
@@ -93,13 +87,13 @@ func GetOrPanic[T any](ctx *Context) T {
 
 func Get[T any](ctx *Context) (T, error) {
 	ttype := genericTypeOf[T]()
-	obj, err := ctx.GetByType(ttype)
+	obj, err := ctx.getByType(ttype)
 	if err != nil {
 		return empty[T](), err
 	}
 	typed, ok := obj.(T)
 	if !ok {
-		return empty[T](), fmt.Errorf("invalid type - could not cast %T to %s", obj, ttype)
+		return empty[T](), &InvalidTypeError{objType: reflect.TypeOf(obj), expectedType: genericTypeOf[T]()}
 	}
 	return typed, nil
 }
@@ -113,14 +107,13 @@ func GetNamedOrPanic[T any](ctx *Context, name string) T {
 }
 
 func GetNamed[T any](ctx *Context, name string) (T, error) {
-	ttype := genericTypeOf[T]()
 	obj, err := ctx.GetNamed(name)
 	if err != nil {
 		return empty[T](), err
 	}
 	typed, ok := obj.(T)
 	if !ok {
-		return empty[T](), fmt.Errorf("invalid type - could not cast %T to %s", obj, ttype)
+		return empty[T](), &InvalidTypeError{objName: &name, objType: reflect.TypeOf(obj), expectedType: genericTypeOf[T]()}
 	}
 	return typed, nil
 }
@@ -144,25 +137,43 @@ func GetAll[T any](ctx *Context) ([]T, error) {
 		if typed, ok := obj.(T); ok {
 			result = append(result, typed)
 		} else {
-			return nil, ErrInvalidType
+			return nil, &InvalidTypeError{objType: ttype, expectedType: genericTypeOf[T]()}
 		}
 	}
 	return result, nil
 }
 
-func dependencyContext(ctx *Context, hldr *holder) (*Context, error) {
-	if ctx.path[hldr] > 0 {
-		return nil, ErrDependencyCycle
+func dependencyContext(ctx *Context, descriptor string) (*Context, error) {
+	if ctx.path[descriptor] > 0 {
+		cycle := make([]string, len(ctx.path))
+		for d, i := range ctx.path {
+			cycle[i-1] = d
+		}
+		return nil, &CyclicDependencyError{path: cycle}
 	}
-	path := make(map[*holder]int)
+	path := make(map[string]int)
 	for k, v := range ctx.path {
 		path[k] = v
 	}
-	path[hldr] = len(path) + 1
+	path[descriptor] = len(path) + 1
 	sub := Context{
 		path:          path,
 		holdersByType: ctx.holdersByType,
 		holdersByName: ctx.holdersByName,
 	}
 	return &sub, nil
+}
+
+func descriptor(objName *string, objType *reflect.Type) string {
+	var result string
+	if objName != nil && objType != nil {
+		result = fmt.Sprintf("%s (name: %s)", (*objType).String(), *objName)
+	} else if objName != nil {
+		return fmt.Sprintf("(name: %s)", *objName)
+	} else if objType != nil {
+		return (*objType).String()
+	} else {
+		panic("Expected obj name or obj type to be defined")
+	}
+	return result
 }

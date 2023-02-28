@@ -88,7 +88,7 @@ func (ctxb *ContextBuilder) AddNamedAs(name string, iface any, ctor any) {
 
 func (ctxb *ContextBuilder) addHolderForType(hldr *holder, itype reflect.Type) error {
 	if hldr.providesType != itype && !hldr.providesType.AssignableTo(itype) {
-		return ErrInvalidType
+		return &InvalidTypeError{objType: hldr.providesType, expectedType: itype}
 	}
 	if ctxb.holdersByType[itype] == nil {
 		ctxb.holdersByType[itype] = NewSet[*holder]()
@@ -102,7 +102,7 @@ func (ctxb *ContextBuilder) addHolderForType(hldr *holder, itype reflect.Type) e
 
 func (ctxb *ContextBuilder) addHolderForName(hldr *holder, name string) error {
 	if ctxb.holdersByName[name] != nil {
-		return ErrDuplicatedName
+		return &DuplicatedNameError{name: name}
 	}
 	ctxb.holdersByName[name] = hldr
 	return nil

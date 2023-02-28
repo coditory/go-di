@@ -43,14 +43,14 @@ func (suite *LazyDependencySuite) TestGetByType() {
 	}
 
 	for _, tt := range tests {
-		desc := fmt.Sprintf("%s-%+v", reflect.TypeOf(tt.value), tt.value)
+		desc := fmt.Sprintf("%s %+v", reflect.TypeOf(tt.value), tt.value)
 		suite.Run(desc, func() {
 			ctxb := di.NewContextBuilder()
 			tt.provide(ctxb)
 			ctx := ctxb.Build()
 			result, err := tt.get(ctx)
-			suite.Nil(err, "received error")
-			suite.Equal(tt.value, result, "retrieved value did not match")
+			suite.Nil(err)
+			suite.Equal(tt.value, result)
 		})
 	}
 }
@@ -89,8 +89,8 @@ func (suite *LazyDependencySuite) TestGetByInterface() {
 			ctxb.AddAs(tt.iface, tt.value)
 			ctx := ctxb.Build()
 			result, err := tt.get(ctx)
-			suite.Nil(err, "received error")
-			suite.Equal(tt.value, result, "retrieved value did not match")
+			suite.Nil(err)
+			suite.Equal(tt.value, result)
 		})
 	}
 }

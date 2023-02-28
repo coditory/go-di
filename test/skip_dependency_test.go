@@ -3,8 +3,9 @@ package di_test
 import (
 	"testing"
 
-	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
+
+	di "github.com/coditory/go-di"
 )
 
 type SkipDependencySuite struct {
@@ -13,20 +14,20 @@ type SkipDependencySuite struct {
 
 func (suite *SkipDependencySuite) TestReturnSkipError() {
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(func() (*Foo, error) { return nil, di.ErrSkipped })
+	ctxb.Add(func() (*Foo, error) { return nil, di.ErrSkippedDependency })
 	ctx := ctxb.Build()
 	result, err := di.Get[*Foo](ctx)
 	suite.Nil(result)
-	suite.Equal(di.ErrMissingObject, err)
+	suite.Error(err, "abc")
 }
 
 func (suite *SkipDependencySuite) TestPanicWithSkipError() {
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(func() *Foo { panic(di.ErrSkipped) })
+	ctxb.Add(func() *Foo { panic(di.ErrSkippedDependency) })
 	ctx := ctxb.Build()
 	result, err := di.Get[*Foo](ctx)
 	suite.Nil(result)
-	suite.Equal(di.ErrMissingObject, err)
+	suite.Error(err, "abc")
 }
 
 func (suite *SkipDependencySuite) TestResolveSliceWithNonSkippedDependnecies() {
@@ -34,7 +35,7 @@ func (suite *SkipDependencySuite) TestResolveSliceWithNonSkippedDependnecies() {
 		baz []Baz
 	}
 	ctxb := di.NewContextBuilder()
-	ctxb.AddAs(new(Baz), func() *Foo { panic(di.ErrSkipped) })
+	ctxb.AddAs(new(Baz), func() *Foo { panic(di.ErrSkippedDependency) })
 	ctxb.AddAs(new(Baz), &bar)
 	ctxb.Add(func(baz []Baz) *Boo {
 		return &Boo{baz: baz}

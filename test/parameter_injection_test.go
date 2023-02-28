@@ -20,7 +20,9 @@ func (suite *ParameterInjectionSuite) TestInjectParams() {
 	ctxb := di.NewContextBuilder()
 	ctxb.Add(&foo)
 	ctxb.Add(&bar)
-	ctxb.Add(func(pfoo *Foo, pbar *Bar) *Boo { return &Boo{foo: pfoo, bar: pbar} })
+	ctxb.Add(func(pfoo *Foo, pbar *Bar) *Boo {
+		return &Boo{foo: pfoo, bar: pbar}
+	})
 	ctx := ctxb.Build()
 	result, err := di.Get[*Boo](ctx)
 	suite.Nil(err)
@@ -35,7 +37,9 @@ func (suite *ParameterInjectionSuite) TestInjectCastedParam() {
 	}
 	ctxb := di.NewContextBuilder()
 	ctxb.AddAs(new(Baz), &foo)
-	ctxb.Add(func(baz Baz) *Boo { return &Boo{baz: baz} })
+	ctxb.Add(func(baz Baz) *Boo {
+		return &Boo{baz: baz}
+	})
 	ctx := ctxb.Build()
 	result, err := di.Get[*Boo](ctx)
 	suite.Nil(err)
@@ -101,7 +105,7 @@ func (suite *ParameterInjectionSuite) TestInjectMissingParam() {
 	result, err := di.Get[*Boo](ctx)
 	suite.Nil(result)
 	suite.NotNil(err)
-	suite.Equal("missing object", err.Error())
+	suite.Equal("could not create dependency *di_test.Boo, cause:\nmissing dependency *di_test.Bar", err.Error())
 }
 
 func (suite *ParameterInjectionSuite) TestInjectSliceOfInterfaces() {

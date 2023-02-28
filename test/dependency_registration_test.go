@@ -10,11 +10,11 @@ import (
 	di "github.com/coditory/go-di"
 )
 
-type EagerDependencySuite struct {
+type DependencyRegistrationSuite struct {
 	suite.Suite
 }
 
-func (suite *EagerDependencySuite) TestGetByType() {
+func (suite *DependencyRegistrationSuite) TestGetByType() {
 	tests := []struct {
 		value any
 		get   func(ctx *di.Context) (any, error)
@@ -44,13 +44,13 @@ func (suite *EagerDependencySuite) TestGetByType() {
 			ctxb.Add(tt.value)
 			ctx := ctxb.Build()
 			result, err := tt.get(ctx)
-			suite.Nil(err, "received error")
-			suite.Equal(tt.value, result, "retrieved value did not match")
+			suite.Nil(err)
+			suite.Equal(tt.value, result)
 		})
 	}
 }
 
-func (suite *EagerDependencySuite) TestGetByInterface() {
+func (suite *DependencyRegistrationSuite) TestGetByInterface() {
 	tests := []struct {
 		value any
 		iface any
@@ -80,13 +80,13 @@ func (suite *EagerDependencySuite) TestGetByInterface() {
 			ctxb.AddAs(tt.iface, tt.value)
 			ctx := ctxb.Build()
 			result, err := tt.get(ctx)
-			suite.Nil(err, "received error")
-			suite.Equal(tt.value, result, "retrieved value did not match")
+			suite.Nil(err)
+			suite.Equal(tt.value, result)
 		})
 	}
 }
 
-func (suite *EagerDependencySuite) TestGetAllByType() {
+func (suite *DependencyRegistrationSuite) TestGetAllByType() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}
 	ctxb := di.NewContextBuilder()
@@ -98,7 +98,7 @@ func (suite *EagerDependencySuite) TestGetAllByType() {
 	suite.Equal([]*Foo{foo1, foo2}, result)
 }
 
-func (suite *EagerDependencySuite) TestGetAllByInterface() {
+func (suite *DependencyRegistrationSuite) TestGetAllByInterface() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}
 	ctxb := di.NewContextBuilder()
@@ -110,15 +110,16 @@ func (suite *EagerDependencySuite) TestGetAllByInterface() {
 	suite.Equal([]Baz{foo1, foo2}, result)
 }
 
-func (suite *EagerDependencySuite) TestGetAllMissing() {
+func (suite *DependencyRegistrationSuite) TestGetAllMissing() {
 	ctxb := di.NewContextBuilder()
 	ctx := ctxb.Build()
 	result, err := di.Get[Baz](ctx)
 	suite.Nil(result)
-	suite.Equal(di.ErrMissingObject, err)
+	suite.Equal("missing dependency di_test.Baz", err.Error())
+	suite.IsType(new(di.MissingDependencyError), err)
 }
 
-func (suite *EagerDependencySuite) TestGetMissing() {
+func (suite *DependencyRegistrationSuite) TestGetMissing() {
 	ctxb := di.NewContextBuilder()
 	ctx := ctxb.Build()
 	result, err := di.GetAll[Baz](ctx)
@@ -126,6 +127,6 @@ func (suite *EagerDependencySuite) TestGetMissing() {
 	suite.Equal([]Baz{}, result)
 }
 
-func TestEagerDependencySuite(t *testing.T) {
-	suite.Run(t, new(EagerDependencySuite))
+func TestDependencyRegistrationSuite(t *testing.T) {
+	suite.Run(t, new(DependencyRegistrationSuite))
 }

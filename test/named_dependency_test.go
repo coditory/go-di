@@ -54,7 +54,7 @@ func (suite *NamedDependencySuite) TestErrorOnDuplicatedName() {
 		ctxb.AddNamed("foo", &Foo{name: "foo2"})
 		return nil
 	}()
-	suite.Equal(di.ErrDuplicatedName, err)
+	suite.Equal("duplicated dependency name: foo", err.Error())
 }
 
 func (suite *NamedDependencySuite) TestErrorOnInvalidType() {
@@ -63,7 +63,7 @@ func (suite *NamedDependencySuite) TestErrorOnInvalidType() {
 	ctx := ctxb.Build()
 	obj, err := di.GetNamed[*Bar](ctx, "foo")
 	suite.Nil(obj)
-	suite.Contains(err.Error(), "invalid type")
+	suite.Equal("could not cast *di_test.Foo (name: foo) to *di_test.Bar", err.Error())
 }
 
 func TestNamedDependencySuite(t *testing.T) {
