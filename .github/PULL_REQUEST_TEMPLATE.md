@@ -4,7 +4,6 @@
 <!-- Add a link to related issue if available -->
 
 ## Checklist
-- [ ] I have tested that there is no similar [pull request](https://github.com/coditory/quark-i18n/pulls) already submitted
-- [ ] I have read [contributing.md](https://github.com/coditory/quark-i18n/blob/master/.github/CONTRIBUTING.md) and applied to the rules
+- [ ] I have checked that there is no similar [pull request](https://github.com/coditory/go-di/pulls) already submitted
+- [ ] I have read [contributing.md](https://github.com/coditory/go-di/blob/master/.github/CONTRIBUTING.md) and applied to the rules
 - [ ] I have unit tested code changes and performed a self-review
-- [ ] I have [tested plugin change locally](https://github.com/coditory/quark-i18n/blob/master/.github/CONTRIBUTING.md#validate-changes-locally) on a sample project

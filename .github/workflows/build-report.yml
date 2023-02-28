@@ -56,4 +56,5 @@ jobs:
           override_commit: ${{ github.event.workflow_run.head_sha }}
           override_branch: ${{ github.event.workflow_run.head_branch }}
           override_build: ${{ github.event.workflow_run.id }}
-          files: "out/test/coverage.xml"
+          files: "out/test/coverage.out"
+          verbose: true

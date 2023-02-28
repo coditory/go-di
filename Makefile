@@ -18,8 +18,8 @@ RESET  := $(if $(findstring $(COLORS),true),$(shell tput -Txterm sgr0))
 # Tools
 GOFUMPT_CMD = go run mvdan.cc/gofumpt@latest
 GOJUNITREP_CMD = go run github.com/jstemmer/go-junit-report/v2@v2.0.0
-GOCOVXML_CMD = go run github.com/AlekSi/gocov-xml@v1.1.0
-GOCOV_CMD = go run github.com/axw/gocov/gocov@v1.1.0
+GOWEIGHT_CMD = go run github.com/jondot/goweight@latest
+GOMODOUTDATED_CMD = go run github.com/psampaz/go-mod-outdated@latest
 # Dockerized tools
 GOLANGCI_LINT_VERSION = v1.51.1
 
@@ -44,33 +44,27 @@ clean: ## Remove build related files (default ./out)
 	$(call task,clean)
 	@rm -fr $(OUT_DIR)
 
-.PHONY: format
-format: ## Format go source files
-	$(call task,format)
-	@$(GOFUMPT_CMD) -l -w .
-	@go mod tidy -e
-
 ## Test:
 .PHONY: test
 test: ## Run tests
 	$(call task,test)
-	@rm -rf $(REPORT_DIR)/tests
-	@mkdir -p $(REPORT_DIR)/tests
+	@rm -rf $(REPORT_DIR)/test
+	@mkdir -p $(REPORT_DIR)/test
 	@go test -v -race ./... \
 		| tee >($(GOJUNITREP_CMD) -set-exit-code > $(REPORT_DIR)/test/junit-report.xml)
 
 .PHONY: coverage
 coverage: ## Run tests and create coverage report
 	$(call task,coverage)
-	@rm -rf $(REPORT_DIR)/tests
-	@mkdir -p $(REPORT_DIR)/tests
-	@go test -cover -covermode=count -coverprofile=$(REPORT_DIR)/test/profile.cov -v ./...
-	# @go test -cover -covermode=count -coverprofile=$(REPORT_DIR)/test/profile.cov -v ./... \
-	#	| tee >($(GOJUNITREP_CMD) -set-exit-code > $(REPORT_DIR)/test/junit-report.xml)
-	@go tool cover -func $(REPORT_DIR)/test/profile.cov
-	@go tool cover -html=$(REPORT_DIR)/test/profile.cov -o $(REPORT_DIR)/test/coverage.html
-	@$(GOCOV_CMD) convert $(REPORT_DIR)/test/profile.cov \
-		| $(GOCOVXML_CMD) > $(REPORT_DIR)/test/coverage.xml
+	@rm -rf $(REPORT_DIR)/test
+	@mkdir -p $(REPORT_DIR)/test
+	@go test -covermode=count -coverprofile=$(REPORT_DIR)/test/coverage.out -v ./... \
+		| tee >($(GOJUNITREP_CMD) -set-exit-code > $(REPORT_DIR)/test/junit-report.xml)
+	@go tool cover -html=$(REPORT_DIR)/test/coverage.out -o $(REPORT_DIR)/test/coverage.html
+
+.PHONY: bench
+bench: ## Run benchmark tests
+	go test -benchmem -count 3 -bench ./...
 
 ## Lint:
 .PHONY: lint
@@ -93,6 +87,28 @@ endif
 		--deadline=65s \
 		--out-format checkstyle:$(REPORT_DIR)/checkstyle/checkstyle-go.xml,colored-line-number \
 		./...
+
+.PHONY: format
+format: ## Format source files
+	$(call task,format)
+	@$(GOFUMPT_CMD) -l -w .
+	@go mod tidy -e
+	@docker run --rm -t -v $(shell pwd):/app -v ~/.cache/golangci-lint/$(GOLANGCI_LINT_VERSION):/root/.cache -w /app \
+		golangci/golangci-lint:$(GOLANGCI_LINT_VERSION) \
+		golangci-lint --fix \
+		--deadline=65s \
+		./...
+
+## Meta:
+.PHONY: outdated
+outdated: ## Print outdated dependencies
+	@go mod tidy
+	@go list -u -m -json all | $(GOMODOUDATED_CMD) -update -direct
+
+.PHONY: weight
+weight: ## Print info about package weight
+	$(call task,weight)
+	$(GOWEIGHT_CMD)
 
 ## Help:
 .PHONY: help
