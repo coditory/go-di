@@ -5,5 +5,5 @@
 
 ## Checklist
 - [ ] I have checked that there is no similar [pull request](https://github.com/coditory/go-di/pulls) already submitted
-- [ ] I have read [contributing.md](https://github.com/coditory/go-di/blob/master/.github/CONTRIBUTING.md) and applied to the rules
+- [ ] I have read [contributing.md](https://github.com/coditory/go-di/blob/main/.github/CONTRIBUTING.md) and applied to the rules
 - [ ] I have unit tested code changes and performed a self-review
