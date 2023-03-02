@@ -1,11 +1,11 @@
-package di
+package collection
 
 import "sort"
 
 type Set[T comparable] struct {
-	set      map[T]int
-	inverted map[int]T
-	index    int
+	indexByValue map[T]int
+	valueByIndex map[int]T
+	index        int
 }
 
 func NewSet[T comparable]() *Set[T] {
@@ -14,44 +14,44 @@ func NewSet[T comparable]() *Set[T] {
 
 func NewSetWithSize[T comparable](size int) *Set[T] {
 	return &Set[T]{
-		set:      make(map[T]int, size),
-		inverted: make(map[int]T, size),
+		indexByValue: make(map[T]int, size),
+		valueByIndex: make(map[int]T, size),
 	}
 }
 
 func (s *Set[T]) Add(value T) {
 	s.index += 1
 	index := s.index
-	s.set[value] = index
-	s.inverted[index] = value
+	s.indexByValue[value] = index
+	s.valueByIndex[index] = value
 }
 
 func (s Set[T]) Remove(value T) {
-	index, ok := s.set[value]
+	index, ok := s.indexByValue[value]
 	if !ok {
 		return
 	}
-	delete(s.set, value)
-	delete(s.inverted, index)
+	delete(s.indexByValue, value)
+	delete(s.valueByIndex, index)
 }
 
 func (s Set[T]) Contains(key T) bool {
-	_, ok := s.set[key]
+	_, ok := s.indexByValue[key]
 	return ok
 }
 
 func (s Set[T]) ToSlice() []T {
-	indexes := make([]int, len(s.set))
+	indexes := make([]int, len(s.indexByValue))
 	i := 0
-	for _, v := range s.set {
+	for _, v := range s.indexByValue {
 		indexes[i] = v
 		i += 1
 	}
 	sort.Ints(indexes)
-	result := make([]T, len(s.set))
+	result := make([]T, len(s.indexByValue))
 	i = 0
 	for _, index := range indexes {
-		result[i] = s.inverted[index]
+		result[i] = s.valueByIndex[index]
 		i += 1
 	}
 	return result

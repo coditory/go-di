@@ -54,7 +54,7 @@ func (suite *DependencyValidationSuite) TestInvalidTypesOnAddAs() {
 			err := ctxb.AddAsOrErr(tt.asType, tt.value)
 			suite.NotNil(err)
 			suite.Equal(tt.message, err.Error())
-			suite.IsType(new(di.InvalidTypeError), err)
+			suite.Equal(di.ErrTypeInvalidType, err.ErrType())
 		})
 	}
 }

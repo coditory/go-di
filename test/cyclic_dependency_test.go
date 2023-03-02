@@ -94,9 +94,8 @@ func (suite *CyclicDependencySuite) TestCyclicDependencyWithInjection() {
 				"cyclic dependency: *di_test.cyclicFoo -> *di_test.cyclicBar -> *di_test.cyclicBaz -> *di_test.cyclicFoo",
 			}, "\n"),
 				err.Error())
-			suite.IsType(new(di.DependencyCreationError), err)
-			var cyclicErr *di.CyclicDependencyError
-			suite.ErrorAs(err, &cyclicErr)
+			suite.Equal(di.ErrTypeDependencyCreation, err.ErrType())
+			suite.Equal(di.ErrTypeCyclicDependency, err.RootCause().(*di.Error).ErrType())
 		})
 	}
 }
@@ -110,9 +109,8 @@ func (suite *CyclicDependencySuite) TestCyclicDependencyOfOne() {
 	result, err := di.GetOrErr[*Foo](ctx)
 	suite.Nil(result)
 	suite.Equal("could not create dependency *di_test.Foo, cause:\ncyclic dependency: *di_test.Foo -> *di_test.Foo", err.Error())
-	suite.IsType(new(di.DependencyCreationError), err)
-	var cyclicErr *di.CyclicDependencyError
-	suite.ErrorAs(err, &cyclicErr)
+	suite.Equal(di.ErrTypeDependencyCreation, err.ErrType())
+	suite.Equal(di.ErrTypeCyclicDependency, err.RootCause().(*di.Error).ErrType())
 }
 
 func (suite *CyclicDependencySuite) TestNoErrorThrownWhenNotRetrieved() {

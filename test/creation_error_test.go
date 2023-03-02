@@ -21,7 +21,8 @@ func (suite *CreationErrorSuite) TestErrorResult() {
 	result, err := di.GetOrErr[*Foo](ctx)
 	suite.Nil(result)
 	suite.Equal("could not create dependency *di_test.Foo, cause:\nsimulated", err.Error())
-	suite.IsType(new(di.DependencyCreationError), err)
+	suite.Equal(di.ErrTypeDependencyCreation, err.ErrType())
+	suite.Equal(errSimulated, err.RootCause())
 	suite.ErrorIs(err, errSimulated)
 }
 
@@ -33,11 +34,12 @@ func (suite *CreationErrorSuite) TestPanic() {
 	ctx := ctxb.Build()
 	result, err := di.GetOrErr[*Foo](ctx)
 	suite.Nil(result)
-	suite.IsType(new(di.DependencyCreationError), err)
+	suite.Equal(di.ErrTypeDependencyCreation, err.ErrType())
+	suite.Equal(errSimulated, err.RootCause())
 	suite.ErrorIs(err, errSimulated)
 }
 
-func (suite *CreationErrorSuite) TestPropagateErrorOnDependencySlice() {
+func (suite *CreationErrorSuite) TestErrorOnSliceDependency() {
 	type Boo struct {
 		baz []Baz
 	}
@@ -53,7 +55,7 @@ func (suite *CreationErrorSuite) TestPropagateErrorOnDependencySlice() {
 	result, err := di.GetOrErr[*Boo](ctx)
 	suite.Nil(result)
 	suite.Equal("could not create dependency *di_test.Boo, cause:\ncould not create dependency di_test.Baz, cause:\nsimulated", err.Error())
-	suite.IsType(new(di.DependencyCreationError), err)
+	suite.Equal(di.ErrTypeDependencyCreation, err.ErrType())
 	suite.ErrorIs(err, errSimulated)
 }
 

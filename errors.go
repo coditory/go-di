@@ -6,71 +6,109 @@ import (
 	"reflect"
 )
 
-var (
-	ErrSkippedDependency      = errors.New("skipped dependency")
-	ErrDuplicatedRegistration = errors.New("duplicated registration")
+var ErrSkippedDependency = errors.New("skipped dependency")
+
+const (
+	ErrTypeDependencyCreation = iota
+	ErrTypeDuplicatedName
+	ErrTypeDuplicatedRegistration
+	ErrTypeMissingDependency
+	ErrTypeInvalidType
+	ErrTypeInvalidConstructor
+	ErrTypeCyclicDependency
 )
 
-type DependencyCreationError struct {
-	objName *string
-	objType *reflect.Type
-	err     error
+type Error struct {
+	errType int
+	message string
+	cause   error
 }
 
-func (e *DependencyCreationError) Error() string {
-	return fmt.Sprintf("could not create dependency %s, cause:\n%s", descriptor(e.objName, e.objType), e.err)
+func (e *Error) ErrType() int {
+	return e.errType
 }
 
-func (e *DependencyCreationError) Unwrap() error {
-	return e.err
+func (e *Error) IsErrType(errType int) bool {
+	return e.errType == errType
 }
 
-type MissingDependencyError struct {
-	objName *string
-	objType *reflect.Type
+func (e *Error) Error() string {
+	return e.message
 }
 
-func (e *MissingDependencyError) Error() string {
-	return fmt.Sprintf("missing dependency %s", descriptor(e.objName, e.objType))
+func (e *Error) Unwrap() error {
+	return e.cause
 }
 
-type InvalidTypeError struct {
-	objName      *string
-	objType      reflect.Type
-	expectedType reflect.Type
-}
-
-func (e *InvalidTypeError) Error() string {
-	return fmt.Sprintf("could not cast %s to %s", descriptor(e.objName, &e.objType), e.expectedType)
-}
-
-type CyclicDependencyError struct {
-	path []string
-}
-
-func (e *CyclicDependencyError) Error() string {
-	result := ""
-	for _, d := range e.path {
-		result = fmt.Sprintf("%s%s -> ", result, d)
+func (e *Error) RootCause() error {
+	if e.cause == nil {
+		return e
 	}
-	if len(e.path) > 0 {
-		result = fmt.Sprintf("%s%s", result, e.path[0])
+	if dierr, ok := e.cause.(*Error); ok {
+		return dierr.RootCause()
 	}
-	return fmt.Sprintf("cyclic dependency: %s", result)
+	return e.cause
 }
 
-type InvalidConstructorError struct {
-	cause string
+func newDuplicatedRegistrationError() *Error {
+	return &Error{
+		errType: ErrTypeDuplicatedRegistration,
+		message: "duplicated registration",
+	}
 }
 
-func (e *InvalidConstructorError) Error() string {
-	return fmt.Sprintf("invalid dependency constructor: %s", e.cause)
+func newDependencyCreationError(objName *string, objType *reflect.Type, cause error) *Error {
+	msg := fmt.Sprintf("could not create dependency %s, cause:\n%s", descriptor(objName, objType), cause)
+	return &Error{
+		errType: ErrTypeDependencyCreation,
+		message: msg,
+		cause:   cause,
+	}
 }
 
-type DuplicatedNameError struct {
-	name string
+func newMissingDependencyError(objName *string, objType *reflect.Type) *Error {
+	msg := fmt.Sprintf("missing dependency %s", descriptor(objName, objType))
+	return &Error{
+		errType: ErrTypeMissingDependency,
+		message: msg,
+	}
 }
 
-func (e *DuplicatedNameError) Error() string {
-	return fmt.Sprintf("duplicated dependency name: %s", e.name)
+func newInvalidTypeError(objName *string, objType reflect.Type, expectedType reflect.Type) *Error {
+	msg := fmt.Sprintf("could not cast %s to %s", descriptor(objName, &objType), expectedType)
+	return &Error{
+		errType: ErrTypeInvalidType,
+		message: msg,
+	}
+}
+
+func newCyclicDependencyError(path []string) *Error {
+	msg := ""
+	for _, d := range path {
+		msg = fmt.Sprintf("%s%s -> ", msg, d)
+	}
+	if len(path) > 0 {
+		msg = fmt.Sprintf("%s%s", msg, path[0])
+	}
+	msg = fmt.Sprintf("cyclic dependency: %s", msg)
+	return &Error{
+		errType: ErrTypeCyclicDependency,
+		message: msg,
+	}
+}
+
+func newInvalidConstructorError(cause string) *Error {
+	msg := fmt.Sprintf("invalid dependency constructor: %s", cause)
+	return &Error{
+		errType: ErrTypeInvalidConstructor,
+		message: msg,
+	}
+}
+
+func newDuplicatedNameError(name string) *Error {
+	msg := fmt.Sprintf("duplicated dependency name: %s", name)
+	return &Error{
+		errType: ErrTypeDuplicatedName,
+		message: msg,
+	}
 }

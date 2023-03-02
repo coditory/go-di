@@ -112,7 +112,7 @@ func (suite *DependencyRegistrationSuite) TestGetAllMissing() {
 	result, err := di.GetOrErr[Baz](ctx)
 	suite.Nil(result)
 	suite.Equal("missing dependency di_test.Baz", err.Error())
-	suite.IsType(new(di.MissingDependencyError), err)
+	suite.Equal(di.ErrTypeMissingDependency, err.ErrType())
 }
 
 func (suite *DependencyRegistrationSuite) TestGetMissing() {

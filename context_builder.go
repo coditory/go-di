@@ -3,18 +3,20 @@ package di
 import (
 	"fmt"
 	"reflect"
+
+	coll "github.com/coditory/go-di/internal/collection"
 )
 
 type ContextBuilder struct {
 	holdersByCtors map[any]*holder
-	holdersByType  map[reflect.Type]*Set[*holder]
+	holdersByType  map[reflect.Type]*coll.Set[*holder]
 	holdersByName  map[string]*holder
 }
 
 func NewContextBuilder() *ContextBuilder {
 	return &ContextBuilder{
 		holdersByCtors: make(map[any]*holder),
-		holdersByType:  make(map[reflect.Type]*Set[*holder]),
+		holdersByType:  make(map[reflect.Type]*coll.Set[*holder]),
 		holdersByName:  make(map[string]*holder),
 	}
 }
@@ -36,7 +38,7 @@ func (ctxb *ContextBuilder) Add(ctor any) {
 	}
 }
 
-func (ctxb *ContextBuilder) AddOrErr(ctor any) error {
+func (ctxb *ContextBuilder) AddOrErr(ctor any) *Error {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
 		return err
@@ -54,7 +56,7 @@ func (ctxb *ContextBuilder) AddNamed(name string, ctor any) {
 	}
 }
 
-func (ctxb *ContextBuilder) AddNamedOrErr(name string, ctor any) error {
+func (ctxb *ContextBuilder) AddNamedOrErr(name string, ctor any) *Error {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
 		return err
@@ -77,7 +79,7 @@ func (ctxb *ContextBuilder) AddAs(atype any, ctor any) {
 	}
 }
 
-func (ctxb *ContextBuilder) AddAsOrErr(atype any, ctor any) error {
+func (ctxb *ContextBuilder) AddAsOrErr(atype any, ctor any) *Error {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
 		return err
@@ -96,7 +98,7 @@ func (ctxb *ContextBuilder) AddNamedAs(name string, atype any, ctor any) {
 	}
 }
 
-func (ctxb *ContextBuilder) AddNamedAsOrErr(name string, atype any, ctor any) error {
+func (ctxb *ContextBuilder) AddNamedAsOrErr(name string, atype any, ctor any) *Error {
 	hldr, err := createUniqueHolder(ctxb, ctor)
 	if err != nil {
 		return err
@@ -114,29 +116,29 @@ func (ctxb *ContextBuilder) AddNamedAsOrErr(name string, atype any, ctor any) er
 	return nil
 }
 
-func (ctxb *ContextBuilder) addHolderForType(hldr *holder, rtype reflect.Type) error {
+func (ctxb *ContextBuilder) addHolderForType(hldr *holder, rtype reflect.Type) *Error {
 	if hldr.providesType != rtype && !hldr.providesType.AssignableTo(rtype) {
-		return &InvalidTypeError{objType: hldr.providesType, expectedType: rtype}
+		return newInvalidTypeError(nil, hldr.providesType, rtype)
 	}
 	if ctxb.holdersByType[rtype] == nil {
-		ctxb.holdersByType[rtype] = NewSet[*holder]()
+		ctxb.holdersByType[rtype] = coll.NewSet[*holder]()
 	}
 	if ctxb.holdersByType[rtype].Contains(hldr) {
-		return ErrDuplicatedRegistration
+		return newDuplicatedRegistrationError()
 	}
 	ctxb.holdersByType[rtype].Add(hldr)
 	return nil
 }
 
-func (ctxb *ContextBuilder) addHolderForName(hldr *holder, name string) error {
+func (ctxb *ContextBuilder) addHolderForName(hldr *holder, name string) *Error {
 	if ctxb.holdersByName[name] != nil {
-		return &DuplicatedNameError{name: name}
+		return newDuplicatedNameError(name)
 	}
 	ctxb.holdersByName[name] = hldr
 	return nil
 }
 
-func createUniqueHolder(ctxb *ContextBuilder, ctor any) (*holder, error) {
+func createUniqueHolder(ctxb *ContextBuilder, ctor any) (*holder, *Error) {
 	cval := reflect.ValueOf(ctor)
 	ckind := cval.Kind()
 	var ptr string
@@ -145,11 +147,11 @@ func createUniqueHolder(ctxb *ContextBuilder, ctor any) (*holder, error) {
 	} else if ckind == reflect.Func || ckind == reflect.Pointer {
 		ptr = fmt.Sprintf("ptr-%p", ctor)
 	} else {
-		return NewHolder(ctor)
+		return newHolder(ctor)
 	}
 	hldr := ctxb.holdersByCtors[ptr]
 	if hldr == nil {
-		nhldr, err := NewHolder(ctor)
+		nhldr, err := newHolder(ctor)
 		if err != nil {
 			return nil, err
 		}

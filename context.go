@@ -20,25 +20,25 @@ func (ctx *Context) GetNamed(name string) any {
 	return obj
 }
 
-func (ctx *Context) GetNamedOrErr(name string) (any, error) {
+func (ctx *Context) GetNamedOrErr(name string) (any, *Error) {
 	holder := ctx.holdersByName[name]
 	if holder == nil {
-		return empty[any](), &MissingDependencyError{objName: &name}
+		return empty[any](), newMissingDependencyError(&name, nil)
 	}
 	depCtx, err := dependencyContext(ctx, descriptor(&name, nil))
 	if err != nil {
 		return empty[any](), err
 	}
-	obj, err := holder.getOrCreate(depCtx)
-	if err != nil {
-		if !errors.Is(err, ErrSkippedDependency) {
-			creationErr := &DependencyCreationError{objName: &name, err: err}
+	obj, cerr := holder.getOrCreate(depCtx)
+	if cerr != nil {
+		if !errors.Is(cerr, ErrSkippedDependency) {
+			creationErr := newDependencyCreationError(&name, nil, cerr)
 			return empty[any](), creationErr
 		}
 	} else {
 		return obj, nil
 	}
-	return empty[any](), &MissingDependencyError{objName: &name}
+	return empty[any](), newMissingDependencyError(&name, nil)
 }
 
 func (ctx *Context) GetByType(atype any) any {
@@ -49,7 +49,7 @@ func (ctx *Context) GetByType(atype any) any {
 	return obj
 }
 
-func (ctx *Context) GetByTypeOrErr(atype any) (any, error) {
+func (ctx *Context) GetByTypeOrErr(atype any) (any, *Error) {
 	rtype := reflect.TypeOf(atype).Elem()
 	return ctx.getByRType(rtype)
 }
@@ -62,35 +62,35 @@ func (ctx *Context) GetAllByType(atype any) []any {
 	return obj
 }
 
-func (ctx *Context) GetAllByTypeOrErr(atype any) ([]any, error) {
+func (ctx *Context) GetAllByTypeOrErr(atype any) ([]any, *Error) {
 	rtype := reflect.TypeOf(atype).Elem()
 	return ctx.getAllByRType(rtype)
 }
 
-func (ctx *Context) getByRType(rtype reflect.Type) (any, error) {
+func (ctx *Context) getByRType(rtype reflect.Type) (any, *Error) {
 	holders := ctx.holdersByType[rtype]
 	if holders == nil {
-		return empty[any](), &MissingDependencyError{objType: &rtype}
+		return empty[any](), newMissingDependencyError(nil, &rtype)
 	}
 	for _, holder := range holders {
 		depCtx, err := dependencyContext(ctx, descriptor(nil, &rtype))
 		if err != nil {
 			return empty[any](), err
 		}
-		obj, err := holder.getOrCreate(depCtx)
-		if err != nil {
-			if !errors.Is(err, ErrSkippedDependency) {
-				creationErr := &DependencyCreationError{objType: &rtype, err: err}
+		obj, cerr := holder.getOrCreate(depCtx)
+		if cerr != nil {
+			if !errors.Is(cerr, ErrSkippedDependency) {
+				creationErr := newDependencyCreationError(nil, &rtype, cerr)
 				return empty[any](), creationErr
 			}
 		} else {
 			return obj, nil
 		}
 	}
-	return empty[any](), &MissingDependencyError{objType: &rtype}
+	return empty[any](), newMissingDependencyError(nil, &rtype)
 }
 
-func (ctx *Context) getAllByRType(rtype reflect.Type) ([]any, error) {
+func (ctx *Context) getAllByRType(rtype reflect.Type) ([]any, *Error) {
 	holders := ctx.holdersByType[rtype]
 	result := make([]any, 0)
 	for _, holder := range holders {
@@ -98,10 +98,10 @@ func (ctx *Context) getAllByRType(rtype reflect.Type) ([]any, error) {
 		if err != nil {
 			return nil, err
 		}
-		obj, err := holder.getOrCreate(depCtx)
-		if err != nil {
-			if !errors.Is(err, ErrSkippedDependency) {
-				creationErr := &DependencyCreationError{objType: &rtype, err: err}
+		obj, cerr := holder.getOrCreate(depCtx)
+		if cerr != nil {
+			if !errors.Is(cerr, ErrSkippedDependency) {
+				creationErr := newDependencyCreationError(nil, &rtype, cerr)
 				return nil, creationErr
 			}
 		} else {
@@ -111,13 +111,13 @@ func (ctx *Context) getAllByRType(rtype reflect.Type) ([]any, error) {
 	return result, nil
 }
 
-func dependencyContext(ctx *Context, descriptor string) (*Context, error) {
+func dependencyContext(ctx *Context, descriptor string) (*Context, *Error) {
 	if ctx.path[descriptor] > 0 {
 		cycle := make([]string, len(ctx.path))
 		for d, i := range ctx.path {
 			cycle[i-1] = d
 		}
-		return nil, &CyclicDependencyError{path: cycle}
+		return nil, newCyclicDependencyError(cycle)
 	}
 	path := make(map[string]int)
 	for k, v := range ctx.path {

@@ -20,7 +20,7 @@ func Get[T any](ctx *Context) T {
 	return obj
 }
 
-func GetOrErr[T any](ctx *Context) (T, error) {
+func GetOrErr[T any](ctx *Context) (T, *Error) {
 	ttype := genericTypeOf[T]()
 	obj, err := ctx.getByRType(ttype)
 	if err != nil {
@@ -28,7 +28,7 @@ func GetOrErr[T any](ctx *Context) (T, error) {
 	}
 	typed, ok := obj.(T)
 	if !ok {
-		return empty[T](), &InvalidTypeError{objType: reflect.TypeOf(obj), expectedType: genericTypeOf[T]()}
+		return empty[T](), newInvalidTypeError(nil, reflect.TypeOf(obj), genericTypeOf[T]())
 	}
 	return typed, nil
 }
@@ -41,14 +41,14 @@ func GetNamed[T any](ctx *Context, name string) T {
 	return obj
 }
 
-func GetNamedOrErr[T any](ctx *Context, name string) (T, error) {
+func GetNamedOrErr[T any](ctx *Context, name string) (T, *Error) {
 	obj, err := ctx.GetNamedOrErr(name)
 	if err != nil {
 		return empty[T](), err
 	}
 	typed, ok := obj.(T)
 	if !ok {
-		return empty[T](), &InvalidTypeError{objName: &name, objType: reflect.TypeOf(obj), expectedType: genericTypeOf[T]()}
+		return empty[T](), newInvalidTypeError(&name, reflect.TypeOf(obj), genericTypeOf[T]())
 	}
 	return typed, nil
 }
@@ -61,7 +61,7 @@ func GetAll[T any](ctx *Context) []T {
 	return result
 }
 
-func GetAllOrErr[T any](ctx *Context) ([]T, error) {
+func GetAllOrErr[T any](ctx *Context) ([]T, *Error) {
 	ttype := genericTypeOf[T]()
 	objs, err := ctx.getAllByRType(ttype)
 	if err != nil {
@@ -72,7 +72,7 @@ func GetAllOrErr[T any](ctx *Context) ([]T, error) {
 		if typed, ok := obj.(T); ok {
 			result = append(result, typed)
 		} else {
-			return nil, &InvalidTypeError{objType: ttype, expectedType: genericTypeOf[T]()}
+			return nil, newInvalidTypeError(nil, ttype, genericTypeOf[T]())
 		}
 	}
 	return result, nil

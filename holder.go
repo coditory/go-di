@@ -14,10 +14,10 @@ type holder struct {
 	providesType reflect.Type
 }
 
-func NewHolder(ctor any) (*holder, error) {
+func newHolder(ctor any) (*holder, *Error) {
 	ctype := reflect.TypeOf(ctor)
 	if ctype == nil {
-		return nil, errors.New("untyped constructor")
+		return nil, newInvalidConstructorError("untyped constructor")
 	}
 	if ctype.Kind() == reflect.Func {
 		return createLazyHolder(ctor)
@@ -26,19 +26,19 @@ func NewHolder(ctor any) (*holder, error) {
 	}
 }
 
-func createLazyHolder(ctor any) (*holder, error) {
+func createLazyHolder(ctor any) (*holder, *Error) {
 	cval := reflect.ValueOf(ctor)
 	ctype := cval.Type()
 	numResults := ctype.NumOut()
 	if numResults < 1 || numResults > 2 {
-		return nil, &InvalidConstructorError{cause: "expected one result value with an optional error"}
+		return nil, newInvalidConstructorError("expected one result value with an optional error")
 	}
 	if ctype.IsVariadic() {
-		return nil, &InvalidConstructorError{cause: "variadic parameters not supported (use slice instead)"}
+		return nil, newInvalidConstructorError("variadic parameters not supported (use slice instead)")
 	}
 	errorInterface := reflect.TypeOf((*error)(nil)).Elem()
 	if numResults == 2 && !ctype.Out(1).AssignableTo(errorInterface) {
-		return nil, &InvalidConstructorError{cause: "expected second result value to be an error"}
+		return nil, newInvalidConstructorError("expected second result value to be an error")
 	}
 	resultType := ctype.Out(0)
 	numArgs := ctype.NumIn()
@@ -74,7 +74,7 @@ func createLazyHolder(ctor any) (*holder, error) {
 		if len(result) == 2 {
 			err, ok := result[1].Interface().(error)
 			if !ok {
-				return nil, &InvalidConstructorError{cause: "expected second result value to be an error"}
+				return nil, newInvalidConstructorError("expected second result value to be an error")
 			}
 			return obj, err
 		}
@@ -86,7 +86,7 @@ func createLazyHolder(ctor any) (*holder, error) {
 	}, nil
 }
 
-func createEagerHolder(value any) (*holder, error) {
+func createEagerHolder(value any) (*holder, *Error) {
 	return &holder{
 		created:      true,
 		instance:     value,
