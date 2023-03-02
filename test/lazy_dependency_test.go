@@ -22,22 +22,22 @@ func (suite *LazyDependencySuite) TestGetByType() {
 	}{
 		{
 			value:   &foo,
-			provide: func(ctxb *di.ContextBuilder) { ctxb.Add(func() *Foo { return &foo }) },
+			provide: func(ctxb *di.ContextBuilder) { ctxb.Provide(func() *Foo { return &foo }) },
 			get:     func(ctx *di.Context) (any, error) { return di.GetOrErr[*Foo](ctx) },
 		},
 		{
 			value:   foo,
-			provide: func(ctxb *di.ContextBuilder) { ctxb.Add(func() Foo { return foo }) },
+			provide: func(ctxb *di.ContextBuilder) { ctxb.Provide(func() Foo { return foo }) },
 			get:     func(ctx *di.Context) (any, error) { return di.GetOrErr[Foo](ctx) },
 		},
 		{
 			value:   42,
-			provide: func(ctxb *di.ContextBuilder) { ctxb.Add(func() int { return 42 }) },
+			provide: func(ctxb *di.ContextBuilder) { ctxb.Provide(func() int { return 42 }) },
 			get:     func(ctx *di.Context) (any, error) { return di.GetOrErr[int](ctx) },
 		},
 		{
 			value:   "text",
-			provide: func(ctxb *di.ContextBuilder) { ctxb.Add(func() string { return "text" }) },
+			provide: func(ctxb *di.ContextBuilder) { ctxb.Provide(func() string { return "text" }) },
 			get:     func(ctx *di.Context) (any, error) { return di.GetOrErr[string](ctx) },
 		},
 	}
@@ -65,19 +65,13 @@ func (suite *LazyDependencySuite) TestGetByInterface() {
 		{
 			value:   &foo,
 			iface:   new(Baz),
-			provide: func(ctxb *di.ContextBuilder) { ctxb.Add(func() *Foo { return &foo }) },
-			get:     func(ctx *di.Context) any { return di.Get[Baz](ctx) },
-		},
-		{
-			value:   (*Foo)(nil),
-			iface:   new(Baz),
-			provide: func(ctxb *di.ContextBuilder) { ctxb.Add(func() *Foo { return nil }) },
+			provide: func(ctxb *di.ContextBuilder) { ctxb.Provide(func() Baz { return &foo }) },
 			get:     func(ctx *di.Context) any { return di.Get[Baz](ctx) },
 		},
 		{
 			value:   bar,
 			iface:   new(Baz),
-			provide: func(ctxb *di.ContextBuilder) { ctxb.Add(func() Bar { return bar }) },
+			provide: func(ctxb *di.ContextBuilder) { ctxb.Provide(func() Baz { return bar }) },
 			get:     func(ctx *di.Context) any { return di.Get[Baz](ctx) },
 		},
 	}
@@ -86,7 +80,7 @@ func (suite *LazyDependencySuite) TestGetByInterface() {
 		desc := fmt.Sprintf("%s-%+v", reflect.TypeOf(tt.value), tt.value)
 		suite.Run(desc, func() {
 			ctxb := di.NewContextBuilder()
-			ctxb.AddAs(tt.iface, tt.value)
+			tt.provide(ctxb)
 			ctx := ctxb.Build()
 			result := tt.get(ctx)
 			suite.Equal(tt.value, result)
@@ -98,8 +92,8 @@ func (suite *LazyDependencySuite) TestGetAllByType() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(func() *Foo { return foo1 })
-	ctxb.Add(func() *Foo { return foo2 })
+	ctxb.Provide(func() *Foo { return foo1 })
+	ctxb.Provide(func() *Foo { return foo2 })
 	ctx := ctxb.Build()
 	result := di.GetAll[*Foo](ctx)
 	suite.Equal([]*Foo{foo1, foo2}, result)
@@ -109,11 +103,10 @@ func (suite *LazyDependencySuite) TestGetAllByInterface() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}
 	ctxb := di.NewContextBuilder()
-	ctxb.AddAs(new(Baz), func() *Foo { return foo1 })
-	ctxb.AddAs(new(Baz), func() *Foo { return foo2 })
+	ctxb.ProvideAs(new(Baz), func() *Foo { return foo1 })
+	ctxb.ProvideAs(new(Baz), func() *Foo { return foo2 })
 	ctx := ctxb.Build()
-	result, err := di.GetAllOrErr[Baz](ctx)
-	suite.Nil(err)
+	result := di.GetAll[Baz](ctx)
 	suite.Equal([]Baz{foo1, foo2}, result)
 }
 

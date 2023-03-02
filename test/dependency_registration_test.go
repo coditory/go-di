@@ -95,6 +95,47 @@ func (suite *DependencyRegistrationSuite) TestGetAllByType() {
 	suite.Equal([]*Foo{foo1, foo2}, result)
 }
 
+func someFunc() string {
+	return "result from someFunc()"
+}
+
+func someFunc2() string {
+	return "result from someFunc2()"
+}
+
+func someFunc3() int {
+	return 42
+}
+
+func someFunc4(a int) string {
+	return fmt.Sprintf("result from someFunc4(%d)", a)
+}
+
+func (suite *DependencyRegistrationSuite) TestGetByFunc() {
+	ctxb := di.NewContextBuilder()
+	ctxb.Add(someFunc)
+	ctxb.Add(someFunc3)
+	ctxb.Add(someFunc4)
+	ctx := ctxb.Build()
+	result := di.Get[func() string](ctx)
+	suite.Equal(someFunc(), result())
+	result2 := di.Get[func() int](ctx)
+	suite.Equal(someFunc3(), result2())
+	result3 := di.Get[func(int) string](ctx)
+	suite.Equal(someFunc4(11), result3(11))
+}
+
+func (suite *DependencyRegistrationSuite) TestGetAllByFunc() {
+	ctxb := di.NewContextBuilder()
+	ctxb.Add(someFunc)
+	ctxb.Add(someFunc2)
+	ctx := ctxb.Build()
+	result := di.GetAll[func() string](ctx)
+	suite.Equal(2, len(result))
+	suite.Equal(someFunc(), result[0]())
+	suite.Equal(someFunc2(), result[1]())
+}
+
 func (suite *DependencyRegistrationSuite) TestGetAllByInterface() {
 	foo1 := &Foo{}
 	foo2 := &Foo{}

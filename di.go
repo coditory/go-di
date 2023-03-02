@@ -4,14 +4,6 @@ import (
 	"reflect"
 )
 
-func GetOrPanic[T any](ctx *Context) T {
-	obj, err := GetOrErr[T](ctx)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
 func Get[T any](ctx *Context) T {
 	obj, err := GetOrErr[T](ctx)
 	if err != nil {

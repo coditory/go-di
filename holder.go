@@ -14,12 +14,12 @@ type holder struct {
 	providesType reflect.Type
 }
 
-func newHolder(ctor any) (*holder, *Error) {
+func newHolder(ctor any, lazy bool) (*holder, *Error) {
 	ctype := reflect.TypeOf(ctor)
 	if ctype == nil {
 		return nil, newInvalidConstructorError("untyped constructor")
 	}
-	if ctype.Kind() == reflect.Func {
+	if lazy {
 		return createLazyHolder(ctor)
 	} else {
 		return createEagerHolder(ctor)
@@ -27,8 +27,11 @@ func newHolder(ctor any) (*holder, *Error) {
 }
 
 func createLazyHolder(ctor any) (*holder, *Error) {
+	ctype := reflect.TypeOf(ctor)
+	if ctype.Kind() != reflect.Func {
+		return nil, newInvalidConstructorError("expected constructor function")
+	}
 	cval := reflect.ValueOf(ctor)
-	ctype := cval.Type()
 	numResults := ctype.NumOut()
 	if numResults < 1 || numResults > 2 {
 		return nil, newInvalidConstructorError("expected one result value with an optional error")

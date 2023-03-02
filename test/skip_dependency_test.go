@@ -14,7 +14,7 @@ type SkipDependencySuite struct {
 
 func (suite *SkipDependencySuite) TestReturnSkipError() {
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(func() (*Foo, error) {
+	ctxb.Provide(func() (*Foo, error) {
 		return nil, di.ErrSkippedDependency
 	})
 	ctx := ctxb.Build()
@@ -25,7 +25,9 @@ func (suite *SkipDependencySuite) TestReturnSkipError() {
 
 func (suite *SkipDependencySuite) TestPanicWithSkipError() {
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(func() *Foo { panic(di.ErrSkippedDependency) })
+	ctxb.Provide(func() *Foo {
+		panic(di.ErrSkippedDependency)
+	})
 	ctx := ctxb.Build()
 	result, err := di.GetOrErr[*Foo](ctx)
 	suite.Nil(result)
@@ -37,9 +39,11 @@ func (suite *SkipDependencySuite) TestResolveSliceWithNonSkippedDependnecies() {
 		baz []Baz
 	}
 	ctxb := di.NewContextBuilder()
-	ctxb.AddAs(new(Baz), func() *Foo { panic(di.ErrSkippedDependency) })
+	ctxb.ProvideAs(new(Baz), func() *Foo {
+		panic(di.ErrSkippedDependency)
+	})
 	ctxb.AddAs(new(Baz), &bar)
-	ctxb.Add(func(baz []Baz) *Boo {
+	ctxb.Provide(func(baz []Baz) *Boo {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()

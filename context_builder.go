@@ -39,7 +39,21 @@ func (ctxb *ContextBuilder) Add(ctor any) {
 }
 
 func (ctxb *ContextBuilder) AddOrErr(ctor any) *Error {
-	hldr, err := createUniqueHolder(ctxb, ctor)
+	return ctxb.addOrErr(ctor, false)
+}
+
+func (ctxb *ContextBuilder) Provide(ctor any) {
+	if err := ctxb.ProvideOrErr(ctor); err != nil {
+		panic(err)
+	}
+}
+
+func (ctxb *ContextBuilder) ProvideOrErr(ctor any) *Error {
+	return ctxb.addOrErr(ctor, true)
+}
+
+func (ctxb *ContextBuilder) addOrErr(ctor any, lazy bool) *Error {
+	hldr, err := createUniqueHolder(ctxb, ctor, lazy)
 	if err != nil {
 		return err
 	}
@@ -57,7 +71,21 @@ func (ctxb *ContextBuilder) AddNamed(name string, ctor any) {
 }
 
 func (ctxb *ContextBuilder) AddNamedOrErr(name string, ctor any) *Error {
-	hldr, err := createUniqueHolder(ctxb, ctor)
+	return ctxb.addNamedOrErr(name, ctor, false)
+}
+
+func (ctxb *ContextBuilder) ProvideNamed(name string, ctor any) {
+	if err := ctxb.ProvideNamedOrErr(name, ctor); err != nil {
+		panic(err)
+	}
+}
+
+func (ctxb *ContextBuilder) ProvideNamedOrErr(name string, ctor any) *Error {
+	return ctxb.addNamedOrErr(name, ctor, true)
+}
+
+func (ctxb *ContextBuilder) addNamedOrErr(name string, ctor any, lazy bool) *Error {
+	hldr, err := createUniqueHolder(ctxb, ctor, lazy)
 	if err != nil {
 		return err
 	}
@@ -80,7 +108,21 @@ func (ctxb *ContextBuilder) AddAs(atype any, ctor any) {
 }
 
 func (ctxb *ContextBuilder) AddAsOrErr(atype any, ctor any) *Error {
-	hldr, err := createUniqueHolder(ctxb, ctor)
+	return ctxb.addAsOrErr(atype, ctor, false)
+}
+
+func (ctxb *ContextBuilder) ProvideAs(atype any, ctor any) {
+	if err := ctxb.ProvideAsOrErr(atype, ctor); err != nil {
+		panic(err)
+	}
+}
+
+func (ctxb *ContextBuilder) ProvideAsOrErr(atype any, ctor any) *Error {
+	return ctxb.addAsOrErr(atype, ctor, true)
+}
+
+func (ctxb *ContextBuilder) addAsOrErr(atype any, ctor any, lazy bool) *Error {
+	hldr, err := createUniqueHolder(ctxb, ctor, lazy)
 	if err != nil {
 		return err
 	}
@@ -99,7 +141,21 @@ func (ctxb *ContextBuilder) AddNamedAs(name string, atype any, ctor any) {
 }
 
 func (ctxb *ContextBuilder) AddNamedAsOrErr(name string, atype any, ctor any) *Error {
-	hldr, err := createUniqueHolder(ctxb, ctor)
+	return ctxb.addNamedAsOrErr(name, atype, ctor, false)
+}
+
+func (ctxb *ContextBuilder) ProvideNamedAs(name string, atype any, ctor any) {
+	if err := ctxb.ProvideNamedAsOrErr(name, atype, ctor); err != nil {
+		panic(err)
+	}
+}
+
+func (ctxb *ContextBuilder) ProvideNamedAsOrErr(name string, atype any, ctor any) *Error {
+	return ctxb.addNamedAsOrErr(name, atype, ctor, true)
+}
+
+func (ctxb *ContextBuilder) addNamedAsOrErr(name string, atype any, ctor any, lazy bool) *Error {
+	hldr, err := createUniqueHolder(ctxb, ctor, lazy)
 	if err != nil {
 		return err
 	}
@@ -138,20 +194,20 @@ func (ctxb *ContextBuilder) addHolderForName(hldr *holder, name string) *Error {
 	return nil
 }
 
-func createUniqueHolder(ctxb *ContextBuilder, ctor any) (*holder, *Error) {
+func createUniqueHolder(ctxb *ContextBuilder, ctor any, lazy bool) (*holder, *Error) {
 	cval := reflect.ValueOf(ctor)
 	ckind := cval.Kind()
 	var ptr string
 	if ckind == reflect.Pointer && cval.IsNil() {
 		ptr = fmt.Sprintf("nil-%T", ctor)
 	} else if ckind == reflect.Func || ckind == reflect.Pointer {
-		ptr = fmt.Sprintf("ptr-%p", ctor)
+		ptr = fmt.Sprintf("ptr-%v-%p", lazy, ctor)
 	} else {
-		return newHolder(ctor)
+		return newHolder(ctor, lazy)
 	}
 	hldr := ctxb.holdersByCtors[ptr]
 	if hldr == nil {
-		nhldr, err := newHolder(ctor)
+		nhldr, err := newHolder(ctor, lazy)
 		if err != nil {
 			return nil, err
 		}

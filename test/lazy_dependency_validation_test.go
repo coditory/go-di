@@ -8,11 +8,11 @@ import (
 	di "github.com/coditory/go-di"
 )
 
-type CreatorValidationSuite struct {
+type LazyDependencyValidationSuite struct {
 	suite.Suite
 }
 
-func (suite *CreatorValidationSuite) TestErrorResult() {
+func (suite *LazyDependencyValidationSuite) TestErrorResult() {
 	tests := []struct {
 		title string
 		ctor  any
@@ -43,12 +43,12 @@ func (suite *CreatorValidationSuite) TestErrorResult() {
 	for _, tt := range tests {
 		suite.Run(tt.title, func() {
 			ctxb := di.NewContextBuilder()
-			err := ctxb.AddOrErr(tt.ctor)
+			err := ctxb.ProvideOrErr(tt.ctor)
 			suite.Equal(tt.error, err.Error())
 		})
 	}
 }
 
-func TestCreatorValidationSuite(t *testing.T) {
-	suite.Run(t, new(CreatorValidationSuite))
+func TestLazyDependencyValidationSuite(t *testing.T) {
+	suite.Run(t, new(LazyDependencyValidationSuite))
 }

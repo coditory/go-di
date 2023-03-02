@@ -3,18 +3,19 @@ package di_test
 import (
 	"testing"
 
-	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/suite"
+
+	di "github.com/coditory/go-di"
 )
 
-type SingleInitSuite struct {
+type SingleCreationSuite struct {
 	suite.Suite
 }
 
-func (suite *SingleInitSuite) TestMultipleGet() {
+func (suite *SingleCreationSuite) TestMultipleGet() {
 	inits := 0
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(func() *Foo { inits++; return &foo })
+	ctxb.Provide(func() *Foo { inits++; return &foo })
 	ctx := ctxb.Build()
 	_, _ = di.GetOrErr[*Foo](ctx)
 	_, _ = di.GetOrErr[*Foo](ctx)
@@ -22,12 +23,12 @@ func (suite *SingleInitSuite) TestMultipleGet() {
 	suite.Equal(1, inits)
 }
 
-func (suite *SingleInitSuite) TestMultipleAddDifferentTypes() {
+func (suite *SingleCreationSuite) TestMultipleAddDifferentTypes() {
 	inits := 0
 	ctor := func() *Foo { inits++; return &Foo{} }
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(ctor)
-	ctxb.AddAs(new(Baz), ctor)
+	ctxb.Provide(ctor)
+	ctxb.ProvideAs(new(Baz), ctor)
 	ctx := ctxb.Build()
 	rfoo, _ := di.GetOrErr[*Foo](ctx)
 	rbaz, _ := di.GetOrErr[Baz](ctx)
@@ -35,6 +36,6 @@ func (suite *SingleInitSuite) TestMultipleAddDifferentTypes() {
 	suite.Equal(rbaz, rfoo)
 }
 
-func TestSingleInitSuite(t *testing.T) {
-	suite.Run(t, new(SingleInitSuite))
+func TestSingleCreationSuite(t *testing.T) {
+	suite.Run(t, new(SingleCreationSuite))
 }

@@ -3,8 +3,9 @@ package di_test
 import (
 	"testing"
 
-	di "github.com/coditory/go-di"
 	"github.com/stretchr/testify/assert"
+
+	di "github.com/coditory/go-di"
 )
 
 type transitiveFoo struct {
@@ -33,9 +34,9 @@ func provideTransitiveBaz() *transitiveBaz {
 
 func Test_TransitiveDependency(t *testing.T) {
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(provideTransitiveFoo)
-	ctxb.Add(provideTransitiveBar)
-	ctxb.Add(provideTransitiveBaz)
+	ctxb.Provide(provideTransitiveFoo)
+	ctxb.Provide(provideTransitiveBar)
+	ctxb.Provide(provideTransitiveBaz)
 	ctx := ctxb.Build()
 	result, err := di.GetOrErr[*transitiveFoo](ctx)
 	assert.Nil(t, err)

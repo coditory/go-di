@@ -34,15 +34,15 @@ func provideCyclicBaz(foo *cyclicFoo) *cyclicBaz {
 }
 
 func provideCyclicFooWithCtx(ctx *di.Context) *cyclicFoo {
-	return &cyclicFoo{bar: di.GetOrPanic[*cyclicBar](ctx)}
+	return &cyclicFoo{bar: di.Get[*cyclicBar](ctx)}
 }
 
 func provideCyclicBarWithCtx(ctx *di.Context) *cyclicBar {
-	return &cyclicBar{baz: di.GetOrPanic[*cyclicBaz](ctx)}
+	return &cyclicBar{baz: di.Get[*cyclicBaz](ctx)}
 }
 
 func provideCyclicBazWithCtx(ctx *di.Context) *cyclicBaz {
-	return &cyclicBaz{foo: di.GetOrPanic[*cyclicFoo](ctx)}
+	return &cyclicBaz{foo: di.Get[*cyclicFoo](ctx)}
 }
 
 type CyclicDependencySuite struct {
@@ -57,25 +57,25 @@ func (suite *CyclicDependencySuite) TestCyclicDependencyWithInjection() {
 		{
 			title: "param",
 			register: func(ctxb *di.ContextBuilder) {
-				ctxb.Add(provideCyclicFoo)
-				ctxb.Add(provideCyclicBar)
-				ctxb.Add(provideCyclicBaz)
+				ctxb.Provide(provideCyclicFoo)
+				ctxb.Provide(provideCyclicBar)
+				ctxb.Provide(provideCyclicBaz)
 			},
 		},
 		{
 			title: "context",
 			register: func(ctxb *di.ContextBuilder) {
-				ctxb.Add(provideCyclicFooWithCtx)
-				ctxb.Add(provideCyclicBarWithCtx)
-				ctxb.Add(provideCyclicBazWithCtx)
+				ctxb.Provide(provideCyclicFooWithCtx)
+				ctxb.Provide(provideCyclicBarWithCtx)
+				ctxb.Provide(provideCyclicBazWithCtx)
 			},
 		},
 		{
 			title: "mixed",
 			register: func(ctxb *di.ContextBuilder) {
-				ctxb.Add(provideCyclicFoo)
-				ctxb.Add(provideCyclicBarWithCtx)
-				ctxb.Add(provideCyclicBaz)
+				ctxb.Provide(provideCyclicFoo)
+				ctxb.Provide(provideCyclicBarWithCtx)
+				ctxb.Provide(provideCyclicBaz)
 			},
 		},
 	}
@@ -102,7 +102,7 @@ func (suite *CyclicDependencySuite) TestCyclicDependencyWithInjection() {
 
 func (suite *CyclicDependencySuite) TestCyclicDependencyOfOne() {
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(func(foo *Foo) *Foo {
+	ctxb.Provide(func(foo *Foo) *Foo {
 		return foo
 	})
 	ctx := ctxb.Build()
@@ -115,10 +115,10 @@ func (suite *CyclicDependencySuite) TestCyclicDependencyOfOne() {
 
 func (suite *CyclicDependencySuite) TestNoErrorThrownWhenNotRetrieved() {
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(func(foo *Foo) *Foo {
+	ctxb.Provide(func(foo *Foo) *Foo {
 		return foo
 	})
-	ctxb.Add(func() *Bar {
+	ctxb.Provide(func() *Bar {
 		return &bar
 	})
 	ctx := ctxb.Build()

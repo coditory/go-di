@@ -13,10 +13,10 @@ type NamedDependencySuite struct {
 }
 
 func (suite *NamedDependencySuite) TestGetNamedDependencyByName() {
-	foo1 := Foo{name: "foo1"}
-	foo2 := Foo{name: "foo2"}
+	foo1 := Foo{id: "foo1"}
+	foo2 := Foo{id: "foo2"}
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(&Foo{name: "foo"})
+	ctxb.Add(&Foo{id: "foo"})
 	ctxb.AddNamed("foo1", &foo1)
 	ctxb.AddNamed("foo2", &foo2)
 	ctx := ctxb.Build()
@@ -27,8 +27,8 @@ func (suite *NamedDependencySuite) TestGetNamedDependencyByName() {
 }
 
 func (suite *NamedDependencySuite) TestGetNamedDependencyByType() {
-	foo1 := Foo{name: "foo1"}
-	foo2 := Foo{name: "foo2"}
+	foo1 := Foo{id: "foo1"}
+	foo2 := Foo{id: "foo2"}
 	ctxb := di.NewContextBuilder()
 	ctxb.AddNamed("foo1", &foo1)
 	ctxb.AddNamed("foo2", &foo2)
@@ -42,8 +42,8 @@ func (suite *NamedDependencySuite) TestGetNamedDependencyByType() {
 
 func (suite *NamedDependencySuite) TestErrorOnDuplicatedName() {
 	ctxb := di.NewContextBuilder()
-	ctxb.AddNamed("foo", &Foo{name: "foo1"})
-	err := ctxb.AddNamedOrErr("foo", &Foo{name: "foo2"})
+	ctxb.AddNamed("foo", &Foo{id: "foo1"})
+	err := ctxb.AddNamedOrErr("foo", &Foo{id: "foo2"})
 	suite.Equal("duplicated dependency name: foo", err.Error())
 }
 

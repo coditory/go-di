@@ -20,7 +20,7 @@ func (suite *ParameterInjectionSuite) TestInjectParams() {
 	ctxb := di.NewContextBuilder()
 	ctxb.Add(&foo)
 	ctxb.Add(&bar)
-	ctxb.Add(func(pfoo *Foo, pbar *Bar) *Boo {
+	ctxb.Provide(func(pfoo *Foo, pbar *Bar) *Boo {
 		return &Boo{foo: pfoo, bar: pbar}
 	})
 	ctx := ctxb.Build()
@@ -36,7 +36,7 @@ func (suite *ParameterInjectionSuite) TestInjectCastedParam() {
 	}
 	ctxb := di.NewContextBuilder()
 	ctxb.AddAs(new(Baz), &foo)
-	ctxb.Add(func(baz Baz) *Boo {
+	ctxb.Provide(func(baz Baz) *Boo {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()
@@ -53,10 +53,10 @@ func (suite *ParameterInjectionSuite) TestInjectContext() {
 	ctxb := di.NewContextBuilder()
 	ctxb.Add(&foo)
 	ctxb.Add(&bar)
-	ctxb.Add(func(ctx *di.Context) *Boo {
+	ctxb.Provide(func(ctx *di.Context) *Boo {
 		return &Boo{
-			foo: di.GetOrPanic[*Foo](ctx),
-			bar: di.GetOrPanic[*Bar](ctx),
+			foo: di.Get[*Foo](ctx),
+			bar: di.Get[*Bar](ctx),
 		}
 	})
 	ctx := ctxb.Build()
@@ -74,10 +74,10 @@ func (suite *ParameterInjectionSuite) TestInjectMixed() {
 	ctxb := di.NewContextBuilder()
 	ctxb.Add(&foo)
 	ctxb.Add(&bar)
-	ctxb.Add(func(ctx *di.Context, foo *Foo) *Boo {
+	ctxb.Provide(func(ctx *di.Context, foo *Foo) *Boo {
 		return &Boo{
 			foo: foo,
-			bar: di.GetOrPanic[*Bar](ctx),
+			bar: di.Get[*Bar](ctx),
 		}
 	})
 	ctx := ctxb.Build()
@@ -94,7 +94,7 @@ func (suite *ParameterInjectionSuite) TestInjectMissingParam() {
 	}
 	ctxb := di.NewContextBuilder()
 	ctxb.Add(&foo)
-	ctxb.Add(func(foo *Foo, bar *Bar) *Boo {
+	ctxb.Provide(func(foo *Foo, bar *Bar) *Boo {
 		return &Boo{foo: foo, bar: bar}
 	})
 	ctx := ctxb.Build()
@@ -111,7 +111,7 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfInterfaces() {
 	ctxb := di.NewContextBuilder()
 	ctxb.AddAs(new(Baz), &foo)
 	ctxb.AddAs(new(Baz), &bar)
-	ctxb.Add(func(baz []Baz) *Boo {
+	ctxb.Provide(func(baz []Baz) *Boo {
 		return &Boo{baz: baz}
 	})
 	ctx := ctxb.Build()
@@ -128,9 +128,9 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfStructs() {
 		foo []Foo
 	}
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(Foo{name: "first"})
-	ctxb.Add(Foo{name: "second"})
-	ctxb.Add(func(foo []Foo) *Boo {
+	ctxb.Add(Foo{id: "first"})
+	ctxb.Add(Foo{id: "second"})
+	ctxb.Provide(func(foo []Foo) *Boo {
 		return &Boo{foo: foo}
 	})
 	ctx := ctxb.Build()
@@ -138,8 +138,8 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfStructs() {
 	suite.NotNil(result)
 	suite.NotNil(result.foo)
 	suite.Equal(2, len(result.foo))
-	suite.Equal("first", result.foo[0].name)
-	suite.Equal("second", result.foo[1].name)
+	suite.Equal("first", result.foo[0].id)
+	suite.Equal("second", result.foo[1].id)
 }
 
 func (suite *ParameterInjectionSuite) TestInjectSliceOfStructPtrs() {
@@ -147,9 +147,9 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfStructPtrs() {
 		foo []*Foo
 	}
 	ctxb := di.NewContextBuilder()
-	ctxb.Add(&Foo{name: "first"})
-	ctxb.Add(&Foo{name: "second"})
-	ctxb.Add(func(foo []*Foo) *Boo {
+	ctxb.Add(&Foo{id: "first"})
+	ctxb.Add(&Foo{id: "second"})
+	ctxb.Provide(func(foo []*Foo) *Boo {
 		return &Boo{foo: foo}
 	})
 	ctx := ctxb.Build()
@@ -157,8 +157,8 @@ func (suite *ParameterInjectionSuite) TestInjectSliceOfStructPtrs() {
 	suite.NotNil(result)
 	suite.NotNil(result.foo)
 	suite.Equal(2, len(result.foo))
-	suite.Equal("first", result.foo[0].name)
-	suite.Equal("second", result.foo[1].name)
+	suite.Equal("first", result.foo[0].id)
+	suite.Equal("second", result.foo[1].id)
 }
 
 func TestParameterInjectionSuite(t *testing.T) {
