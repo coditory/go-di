@@ -102,7 +102,7 @@ format: ## Format source files
 .PHONY: outdated
 outdated: ## Print outdated dependencies
 	@go mod tidy
-	@go list -u -m -json all | $(GOMODOUDATED_CMD) -update -direct
+	@go list -u -m -json all | $(GOMODOUTDATED_CMD) -update -direct
 
 .PHONY: weight
 weight: ## Print info about package weight

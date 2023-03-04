@@ -26,6 +26,11 @@ func (suite *LazyDependencySuite) TestGetByType() {
 			get:     func(ctx *di.Context) (any, error) { return di.GetOrErr[*Foo](ctx) },
 		},
 		{
+			value:   &foo,
+			provide: func(ctxb *di.ContextBuilder) { ctxb.Provide(func() (*Foo, error) { return &foo, nil }) },
+			get:     func(ctx *di.Context) (any, error) { return di.GetOrErr[*Foo](ctx) },
+		},
+		{
 			value:   foo,
 			provide: func(ctxb *di.ContextBuilder) { ctxb.Provide(func() Foo { return foo }) },
 			get:     func(ctx *di.Context) (any, error) { return di.GetOrErr[Foo](ctx) },

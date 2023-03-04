@@ -39,9 +39,11 @@ func createLazyHolder(ctor any) (*holder, *Error) {
 	if ctype.IsVariadic() {
 		return nil, newInvalidConstructorError("variadic parameters not supported (use slice instead)")
 	}
-	errorInterface := reflect.TypeOf((*error)(nil)).Elem()
-	if numResults == 2 && !ctype.Out(1).AssignableTo(errorInterface) {
-		return nil, newInvalidConstructorError("expected second result value to be an error")
+	if numResults == 2 {
+		outtype := reflect.New(ctype.Out(1))
+		if _, ok := outtype.Interface().(*error); !ok {
+			return nil, newInvalidConstructorError("expected second result value to be an error")
+		}
 	}
 	resultType := ctype.Out(0)
 	numArgs := ctype.NumIn()
@@ -75,9 +77,12 @@ func createLazyHolder(ctor any) (*holder, *Error) {
 		result := cval.Call(args)
 		obj := result[0].Interface()
 		if len(result) == 2 {
+			if result[1].IsNil() {
+				return obj, nil
+			}
 			err, ok := result[1].Interface().(error)
 			if !ok {
-				return nil, newInvalidConstructorError("expected second result value to be an error")
+				return nil, newInvalidConstructorError("expected second result value to be an error xxxx")
 			}
 			return obj, err
 		}
