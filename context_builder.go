@@ -57,6 +57,18 @@ func (ctxb *ContextBuilder) addOrErr(ctor any, lazy bool) *Error {
 	if err != nil {
 		return err
 	}
+	if hldr.providesType.Implements(initializableRType) {
+		err = ctxb.addHolderForType(hldr, initializableRType)
+		if err != nil {
+			return err
+		}
+	}
+	if hldr.providesType.Implements(shutdownableRType) {
+		err = ctxb.addHolderForType(hldr, shutdownableRType)
+		if err != nil {
+			return err
+		}
+	}
 	err = ctxb.addHolderForType(hldr, hldr.providesType)
 	if err != nil {
 		return err
@@ -187,7 +199,7 @@ func (ctxb *ContextBuilder) addHolderForType(hldr *holder, rtype reflect.Type) *
 }
 
 func (ctxb *ContextBuilder) addHolderForName(hldr *holder, name string) *Error {
-	if ctxb.holdersByName[name] != nil {
+	if ctxb.holdersByName[name] != nil && ctxb.holdersByName[name] != hldr {
 		return newDuplicatedNameError(name)
 	}
 	ctxb.holdersByName[name] = hldr

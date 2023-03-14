@@ -16,6 +16,9 @@ const (
 	ErrTypeInvalidType
 	ErrTypeInvalidConstructor
 	ErrTypeCyclicDependency
+	ErrTypeDependencyInitialization
+	ErrTypeDependencyShutdown
+	ErrTypeLifecycle
 )
 
 type Error struct {
@@ -50,6 +53,14 @@ func (e *Error) RootCause() error {
 	return e.cause
 }
 
+func newLifecycleError(cause string) *Error {
+	msg := fmt.Sprintf("context lifecycle error: %s", cause)
+	return &Error{
+		errType: ErrTypeLifecycle,
+		message: msg,
+	}
+}
+
 func newDuplicatedRegistrationError() *Error {
 	return &Error{
 		errType: ErrTypeDuplicatedRegistration,
@@ -79,6 +90,24 @@ func newInvalidTypeError(objName *string, objType reflect.Type, expectedType ref
 	return &Error{
 		errType: ErrTypeInvalidType,
 		message: msg,
+	}
+}
+
+func newInitializationError(objType *reflect.Type, cause error) *Error {
+	msg := fmt.Sprintf("could not initialize dependency: %s, cause:\n%s", descriptor(nil, objType), cause)
+	return &Error{
+		errType: ErrTypeDependencyInitialization,
+		message: msg,
+		cause:   cause,
+	}
+}
+
+func newShutdownError(objType *reflect.Type, cause error) *Error {
+	msg := fmt.Sprintf("could not shutdown dependency: %s, cause:\n%s", descriptor(nil, objType), cause)
+	return &Error{
+		errType: ErrTypeDependencyShutdown,
+		message: msg,
+		cause:   cause,
 	}
 }
 

@@ -12,7 +12,7 @@ type NamedDependencySuite struct {
 	suite.Suite
 }
 
-func (suite *NamedDependencySuite) TestGetNamedDependencyByName() {
+func (suite *LifecycleSuite) TestGetNamedDependencyByName() {
 	foo1 := Foo{id: "foo1"}
 	foo2 := Foo{id: "foo2"}
 	ctxb := di.NewContextBuilder()
@@ -26,7 +26,7 @@ func (suite *NamedDependencySuite) TestGetNamedDependencyByName() {
 	suite.Equal(&foo2, result)
 }
 
-func (suite *NamedDependencySuite) TestGetNamedDependencyByType() {
+func (suite *LifecycleSuite) TestGetNamedDependencyByType() {
 	foo1 := Foo{id: "foo1"}
 	foo2 := Foo{id: "foo2"}
 	ctxb := di.NewContextBuilder()
@@ -40,14 +40,28 @@ func (suite *NamedDependencySuite) TestGetNamedDependencyByType() {
 	suite.Equal([]*Foo{&foo1, &foo2, &foo}, all)
 }
 
-func (suite *NamedDependencySuite) TestErrorOnDuplicatedName() {
+func (suite *LifecycleSuite) TestRegisterNamedDependencyTwiceForDifferentTypes() {
+	foo1 := Foo{id: "foo1"}
+	ctxb := di.NewContextBuilder()
+	ctxb.AddNamedAs("foo", new(any), &foo1)
+	ctxb.AddNamed("foo", &foo1)
+	ctx := ctxb.Build()
+	result := di.Get[*Foo](ctx)
+	suite.Equal(&foo1, result)
+	resultAny := di.Get[any](ctx)
+	suite.Equal(&foo1, resultAny)
+	all := di.GetAll[*Foo](ctx)
+	suite.Equal([]*Foo{&foo1}, all)
+}
+
+func (suite *LifecycleSuite) TestErrorOnDuplicatedName() {
 	ctxb := di.NewContextBuilder()
 	ctxb.AddNamed("foo", &Foo{id: "foo1"})
 	err := ctxb.AddNamedOrErr("foo", &Foo{id: "foo2"})
 	suite.Equal("duplicated dependency name: foo", err.Error())
 }
 
-func (suite *NamedDependencySuite) TestErrorOnInvalidType() {
+func (suite *LifecycleSuite) TestErrorOnInvalidType() {
 	ctxb := di.NewContextBuilder()
 	ctxb.AddNamed("foo", &foo)
 	ctx := ctxb.Build()
@@ -57,5 +71,5 @@ func (suite *NamedDependencySuite) TestErrorOnInvalidType() {
 }
 
 func TestNamedDependencySuite(t *testing.T) {
-	suite.Run(t, new(NamedDependencySuite))
+	suite.Run(t, new(LifecycleSuite))
 }

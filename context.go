@@ -1,6 +1,7 @@
 package di
 
 import (
+	stdcontext "context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -10,6 +11,91 @@ type Context struct {
 	path          map[string]int
 	holdersByType map[reflect.Type][]*holder
 	holdersByName map[string]*holder
+	initialized   bool
+	shutdown      bool
+}
+
+func (ctx *Context) Initialize() {
+	err := ctx.InitializeOrErr()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (ctx *Context) InitializeOrErr() *Error {
+	if ctx.initialized {
+		return newLifecycleError("context already initialized")
+	}
+	if ctx.shutdown {
+		return newLifecycleError("context already shutdown")
+	}
+	deps := ctx.GetAllByType(new(Initializable))
+	for _, dep := range deps {
+		initializable := dep.(Initializable)
+		err := func() (suberr error) {
+			defer func() {
+				if r := recover(); r != nil {
+					switch x := r.(type) {
+					case string:
+						suberr = errors.New(x)
+					case error:
+						suberr = x
+					default:
+						suberr = errors.New("shutdown panic")
+					}
+				}
+			}()
+			initializable.Initialize()
+			return nil
+		}()
+		if err != nil {
+			depType := reflect.TypeOf(dep)
+			return newInitializationError(&depType, err)
+		}
+	}
+	ctx.initialized = true
+	return nil
+}
+
+func (ctx *Context) Shutdown(context stdcontext.Context) {
+	err := ctx.ShutdownOrErr(context)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (ctx *Context) ShutdownOrErr(context stdcontext.Context) *Error {
+	if ctx.shutdown {
+		return newLifecycleError("context already shutdown")
+	}
+	rtype := reflect.TypeOf(new(Shutdownable)).Elem()
+	holders := ctx.holdersByType[rtype]
+	for _, holder := range holders {
+		if holder.created {
+			shutdownable := holder.instance.(Shutdownable)
+			err := func() (suberr error) {
+				defer func() {
+					if r := recover(); r != nil {
+						switch x := r.(type) {
+						case string:
+							suberr = errors.New(x)
+						case error:
+							suberr = x
+						default:
+							suberr = errors.New("shutdown panic")
+						}
+					}
+				}()
+				shutdownable.Shutdown(context)
+				return nil
+			}()
+			if err != nil {
+				return newShutdownError(&holder.providesType, err)
+			}
+		}
+	}
+	ctx.shutdown = true
+	return nil
 }
 
 func (ctx *Context) GetNamed(name string) any {
@@ -21,6 +107,9 @@ func (ctx *Context) GetNamed(name string) any {
 }
 
 func (ctx *Context) GetNamedOrErr(name string) (any, *Error) {
+	if ctx.shutdown {
+		return nil, newLifecycleError("context already shutdown")
+	}
 	holder := ctx.holdersByName[name]
 	if holder == nil {
 		return empty[any](), newMissingDependencyError(&name, nil)
@@ -68,6 +157,9 @@ func (ctx *Context) GetAllByTypeOrErr(atype any) ([]any, *Error) {
 }
 
 func (ctx *Context) getByRType(rtype reflect.Type) (any, *Error) {
+	if ctx.shutdown {
+		return nil, newLifecycleError("context already shutdown")
+	}
 	holders := ctx.holdersByType[rtype]
 	if holders == nil {
 		return empty[any](), newMissingDependencyError(nil, &rtype)
@@ -91,6 +183,9 @@ func (ctx *Context) getByRType(rtype reflect.Type) (any, *Error) {
 }
 
 func (ctx *Context) getAllByRType(rtype reflect.Type) ([]any, *Error) {
+	if ctx.shutdown {
+		return nil, newLifecycleError("context already shutdown")
+	}
 	holders := ctx.holdersByType[rtype]
 	result := make([]any, 0)
 	for _, holder := range holders {
